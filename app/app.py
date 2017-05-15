@@ -16,7 +16,7 @@ app.secret_key = "horses"
 @app.route("/")
 def root():
     # Redirects to home
-    pass
+    return redirect(url_for('home'))
 
 
 @app.route("/home/")
@@ -35,6 +35,14 @@ def login():
 def register():
     # Displays register form and processes registration input
     pass
+
+
+@app.route("/logout/", methods=["POST"])
+def register():
+    # If logged in, logs user out, redirects to home
+    if is_logged_in():
+        logout()
+    redirect(url_for('home'))
 
 
 @app.route("/project/<projID>")
@@ -57,4 +65,23 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     pass
 
-# ===== HELPERS ===== #
+# ===== LOGIN HELPERS ===== #
+
+
+def is_logged_in():
+    return "username" in session
+
+
+def get_username():
+    return session["username"]
+
+
+def logout():
+    session.pop('username')
+
+
+# -- run module -- #
+
+if __name__ == "__main__":
+    app.debug = True
+    app.run()
