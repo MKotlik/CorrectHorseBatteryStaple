@@ -22,26 +22,29 @@ def root():
 @app.route("/home/")
 def home():
     # Displays the homepage, diff versions based on login status
-    pass
+    if is_logged_in():
+        return render_template('home_user.html')
+    else:
+        return render_template('home_public.html')
 
 
-@app.route("/login/", methods=["GET", "POST"])
+@app.route("/login/")
 def login():
-    # Displays login form and processes login input
-    pass
+    # Displays login form, actual login processing happens thru ajax
+    return render_template('login.html')
 
 
-@app.route("/register/", methods=["GET", "POST"])
-def register():
-    # Displays register form and processes registration input
-    pass
+@app.route("/signup/")
+def signup():
+    # Displays sign up form, actual processing happens thru ajax
+    return render_template('signup.html')
 
 
 @app.route("/logout/", methods=["POST"])
-def register():
+def logout():
     # If logged in, logs user out, redirects to home
     if is_logged_in():
-        logout()
+        session.pop('username')
     redirect(url_for('home'))
 
 
@@ -65,6 +68,47 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     pass
 
+
+@app.route("/ajaxlogin/", methods=["POST"])
+def ajaxlogin():
+    """Endpoint for ajax login POST request
+    Takes and validates a username and password
+    Returns: "ok" if account exists and login info matches
+             "mismatch" if password mismatch or nonexistent account
+    """
+    username = request.form["username"]
+    password = request.form["password"]
+    if database.is_login_valid(username, password):
+        session['username'] = username
+        return "ok"
+    else:
+        return "mismatch"
+
+
+
+@app.route("/ajaxsignup/", methods=["POST"])
+def ajaxsignup():
+    """Endpoint for ajax sign up POST request
+    Takes and validates a username and password
+    Returns: "ok" if account created successfully
+             "taken" if given username is already taken
+             "badpass" if password doesn't match requirements
+    """
+    username = request.form["username"]
+    password = request.form["password"]
+    # Check if username is taken
+    if database.is_user_existing(username, password):
+        return "taken"
+    # Check if password meats reqs (in addition to client-side check)
+    elif not is_password_valid(password):
+        return "badpass"
+    else:
+        # Automatically log user in
+        session['username'] = username
+        # Return "ok" to perform client-side redirect
+        return "ok"
+
+
 # ===== LOGIN HELPERS ===== #
 
 
@@ -76,8 +120,9 @@ def get_username():
     return session["username"]
 
 
-def logout():
-    session.pop('username')
+def is_password_valid(password):
+    # Currently password length is only req, but can expand
+    return len(password) >= 8
 
 
 # -- run module -- #
