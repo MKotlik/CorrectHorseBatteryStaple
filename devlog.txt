@@ -25,3 +25,13 @@ jonalfD -- 2016-12-04 14:32
 
 - Added basic server structure and devlog
 ==============================
+
+==============================
+ mishaK -- 2017-05-15 16:50
+
+- Finished all login & register funcs in app.py
+- Added ajax endpoints to app.py
+- Added docstrings to all funcs in app.py
+- Added headers for login funcs to database.py
+- Changed /register/ to /signup/ (more modern)
+==============================

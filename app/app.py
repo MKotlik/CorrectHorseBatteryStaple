@@ -11,17 +11,17 @@ app = Flask(__name__)
 app.secret_key = "horses"
 
 
-# ===== ROUTES ===== #
+# ===== VISIBLE ROUTES ===== #
 
 @app.route("/")
 def root():
-    # Redirects to home
+    '''Redirects to home'''
     return redirect(url_for('home'))
 
 
 @app.route("/home/")
 def home():
-    # Displays the homepage, diff versions based on login status
+    '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
         return render_template('home_user.html')
     else:
@@ -30,19 +30,19 @@ def home():
 
 @app.route("/login/")
 def login():
-    # Displays login form, actual login processing happens thru ajax
+    '''Displays login form, actual login processing happens thru ajax'''
     return render_template('login.html')
 
 
 @app.route("/signup/")
 def signup():
-    # Displays sign up form, actual processing happens thru ajax
+    '''Displays sign up form, actual processing happens thru ajax'''
     return render_template('signup.html')
 
 
 @app.route("/logout/", methods=["POST"])
 def logout():
-    # If logged in, logs user out, redirects to home
+    '''If logged in, logs user out, redirects to home'''
     if is_logged_in():
         session.pop('username')
     redirect(url_for('home'))
@@ -50,32 +50,33 @@ def logout():
 
 @app.route("/project/<projID>")
 def project(projID):
-    # Displays editor for project specified by projID
-    # projID is generated when a new project is created
+    '''Displays editor for project specified by projID
+    projID is generated when a new project is created'''
     pass
 
 
 @app.route("/profile/")
 def profile():
-    # Displays the profile of the currently logged in user
+    '''Displays the profile of the currently logged in user'''
     # NOTE: Shows a "please log in" page or redirects to login if not logged in
     pass
 
 
 @app.route("/search/<query>")
 def search(query):
-    # Displays search results for given query
+    '''Displays search results for given query'''
     # NOTE: should we have a search page w/o query as well? (/search/)
     pass
 
+# ===== AJAX ROUTES ===== #
 
 @app.route("/ajaxlogin/", methods=["POST"])
 def ajaxlogin():
-    """Endpoint for ajax login POST request
+    '''Endpoint for ajax login POST request
     Takes and validates a username and password
     Returns: "ok" if account exists and login info matches
              "mismatch" if password mismatch or nonexistent account
-    """
+    '''
     username = request.form["username"]
     password = request.form["password"]
     if database.is_login_valid(username, password):
@@ -88,16 +89,16 @@ def ajaxlogin():
 
 @app.route("/ajaxsignup/", methods=["POST"])
 def ajaxsignup():
-    """Endpoint for ajax sign up POST request
+    '''Endpoint for ajax sign up POST request
     Takes and validates a username and password
     Returns: "ok" if account created successfully
              "taken" if given username is already taken
              "badpass" if password doesn't match requirements
-    """
+    '''
     username = request.form["username"]
     password = request.form["password"]
     # Check if username is taken
-    if database.is_user_existing(username, password):
+    if database.is_user_existing(username):
         return "taken"
     # Check if password meats reqs (in addition to client-side check)
     elif not is_password_valid(password):
