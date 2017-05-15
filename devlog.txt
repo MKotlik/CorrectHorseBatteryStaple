@@ -1,0 +1,27 @@
+Site Devlog
+Team CorrectHorseBatteryStaple - Misha Kotlik, Kenneth Li, Nick Ng, James Yang
+
+Newest Entries at the bottom
+Example Header formatting formatting
+firstL -- TIMESTAMP\n
+jonalfD -- 2016-12-04 14:32
+
+==============================
+ mishaK --
+ kennethL --
+ nickN --
+ jamesY --
+==============================
+
+
+==============================
+ All -- 2017-05-12 07:30
+
+- Finished design doc
+==============================
+
+==============================
+ mishaK -- 2017-05-15 13:40
+
+- Added basic server structure and devlog
+==============================
