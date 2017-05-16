@@ -70,6 +70,10 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     pass
 
+@app.route("/test")
+def test():
+    return render_template('editor.html')
+    
 # ===== AJAX ROUTES ===== #
 
 
