@@ -5,7 +5,7 @@
 from pymongo import MongoClient
 import hashlib
 
-''' # ===== PROPOSED DATABASE SCHEMA ===== #
+''' # ===== DATABASE SCHEMA ===== #
 users collection:
 - each user document contains:
     - username
@@ -23,11 +23,30 @@ projects collection:
     - creationTime (datetime-formatted time of when project was created)
     - sculptObject (some representation of the actual model)
     - lastSaveTime (datetime-formatted time of last save to database)
-- each project COULD also contain:
     - description (description of project)
+- each project COULD also contain:
     - editHistory (dict or list of edits made between saves [differences
         between saves], so that changes could be rolled back. Like git.)
 '''
+
+DEBUG = True
+
+
+def initdb():
+    # NOTE: can I create an index if I dont have the needed fields?
+    client = MongoClient()
+    db = client.sculptio  # Create the database in the server
+    users = db.users  # Create the users collection
+    projects = db.projects  # Create the projects collection
+    # Create indices for faster traversal
+    resultU = users.create_index('username')
+    resultP = projects.create_index('projID')
+    client.close()
+    if DEBUG:
+        print "Result of user indices creation: "
+        print resultU
+        print "Result of project indices creation: "
+        print resultP
 
 
 def is_login_valid(username, password):
