@@ -35,3 +35,10 @@ jonalfD -- 2016-12-04 14:32
 - Added headers for login funcs to database.py
 - Changed /register/ to /signup/ (more modern)
 ==============================
+
+==============================
+ mishaK -- 2017-05-16 01:50
+
+- Finished login & register funcs in database.py
+- Proposed schema for users & projects collections in database
+==============================

@@ -70,6 +70,7 @@ def search(query):
 
 # ===== AJAX ROUTES ===== #
 
+
 @app.route("/ajaxlogin/", methods=["POST"])
 def ajaxlogin():
     '''Endpoint for ajax login POST request
@@ -86,7 +87,6 @@ def ajaxlogin():
         return "mismatch"
 
 
-
 @app.route("/ajaxsignup/", methods=["POST"])
 def ajaxsignup():
     '''Endpoint for ajax sign up POST request
@@ -98,7 +98,7 @@ def ajaxsignup():
     username = request.form["username"]
     password = request.form["password"]
     # Check if username is taken
-    if database.is_user_existing(username):
+    if database.does_user_exist(username):
         return "taken"
     # Check if password meats reqs (in addition to client-side check)
     elif not is_password_valid(password):
