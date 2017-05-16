@@ -6,9 +6,11 @@
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import database
+from flask_socketio import SocketIO
 
 app = Flask(__name__)
 app.secret_key = "horses"
+socketio = SocketIO(app)
 
 
 # ===== VISIBLE ROUTES ===== #
@@ -129,5 +131,4 @@ def is_password_valid(password):
 # -- run module -- #
 
 if __name__ == "__main__":
-    app.debug = True
-    app.run()
+    socketio.run(app, debug=True)
