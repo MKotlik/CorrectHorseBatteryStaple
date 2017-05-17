@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Substrate Editor
+{% endblock %}
+
+{% block body %}
+    <div id="container">
+        <canvas id="canvas">
+            
+        </canvas>
+    </div>
+    <script src="/static/js/socket.io.js"></script>
+    <script src="/static/js/three.js"></script>
+    <script src="/static/js/Constants.js"></script>
+    <script src="/static/js/Sandbox.js"></script>
+    <script src="/static/js/Drawing.js"></script>
+    <script src="/static/js/Input.js"></script>
+    <script src="/static/js/base.js"></script>
+{% endblock %}
