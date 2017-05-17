@@ -29,25 +29,28 @@ projects collection:
         between saves], so that changes could be rolled back. Like git.)
 '''
 
-DEBUG = True
 
+# ===== GENERAL DATABASE FUNCTIONS ===== #
 
 def initdb():
-    # NOTE: can I create an index if I dont have the needed fields?
+    '''Creates the sculptio database with the users and projects collections.
+    Creates indices based on the 'username' and 'projID' fields respectively,
+    to allow for faster collection traversal.
+    Returns: boolean
+    '''
     client = MongoClient()
     db = client.sculptio  # Create the database in the server
     users = db.users  # Create the users collection
     projects = db.projects  # Create the projects collection
-    # Create indices for faster traversal
+    # Create indices for faster traversal, in ascending order
     resultU = users.create_index('username')
     resultP = projects.create_index('projID')
     client.close()
-    if DEBUG:
-        print "Result of user indices creation: "
-        print resultU
-        print "Result of project indices creation: "
-        print resultP
+    # PyMongo should throw error on failure, but return success as well
+    return resultU == 'username_1' and resultP == 'projID_1'
 
+
+# ===== LOGIN/REGISTER FUNCTIONS ===== #
 
 def is_login_valid(username, password):
     '''Checks if given credentials match an existing user in the db
@@ -96,3 +99,21 @@ def does_user_exist(username):
 def hash_password(unhashed):
     '''Returns a salted and md5 hashed version of the password'''
     return hashlib.md5("2017horsesW/StapledCorrect" + unhashed).hexdigest()
+
+
+# ===== USER FUNCTIONS ===== #
+
+def get_user(username):
+    '''Retrieves a dict with the specified user's data from the database
+    Args: username (str)
+    Returns: tuple containing success report and data dict (boolean, dict)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    user_cursor = users.find({'username': username})
+    if user_cursor.count() == 0:
+        result = (False, {})
+    else:
+        result = (True, user_cursor[0])
+    client.close()
+    return result
