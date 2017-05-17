@@ -21,12 +21,18 @@ projects collection:
     - ownerName (username of project creator)
     - contributorNames (list of usernames of contributors to project)
     - creationTime (datetime-formatted time of when project was created)
-    - sculptObject (some representation of the actual model)
+    - sculpture (some representation of the actual model)
     - lastSaveTime (datetime-formatted time of last save to database)
     - description (description of project)
 - each project COULD also contain:
     - editHistory (dict or list of edits made between saves [differences
         between saves], so that changes could be rolled back. Like git.)
+
+lastprojid collection:
+- contains a single document to keep track of last assigned projID:
+    - id (the projID of the most recently created project)
+- since projIDs are consecutive integers starting with 0, lastprojid can be
+    used to get the total number of projects created
 '''
 
 
@@ -42,6 +48,7 @@ def initdb():
     db = client.sculptio  # Create the database in the server
     users = db.users  # Create the users collection
     projects = db.projects  # Create the projects collection
+    lastprojid = db.lastprojid  # Create the lastprojid collection
     # Create indices for faster traversal, in ascending order
     resultU = users.create_index('username')
     resultP = projects.create_index('projID')
@@ -117,3 +124,52 @@ def get_user(username):
         result = (True, user_cursor[0])
     client.close()
     return result
+
+
+def add_owned_proj(username, projID):
+    pass
+
+
+def add_contributed_proj(username, projID):
+    pass
+
+
+def update_password(username, password):
+    pass
+
+
+# ===== PROJECT FUNCTIONS ===== #
+
+def add_project(name, owner, description=''):
+    pass
+
+
+def add_contributor(projID, username):
+    pass
+
+
+def update_description(projID, description):
+    pass
+
+
+def update_project_name(projID, name):
+    pass
+
+
+def update_sculpture(projID, sculpture):
+    pass
+
+
+def update_project(projID, name=None, owner=None, contributors=None,
+                   description=None, sculpture=None):
+    pass
+
+
+# ===== PROJID FUNCTIONS ===== #
+
+def get_last_projID():
+    pass
+
+
+def inc_last_projID():
+    pass
