@@ -1,28 +1,81 @@
-function Sandbox(socket, width, height, scene, renderer, drawing, input) {
+function Sandbox(socket, width, height, scene, camera, renderer, drawing, viewport) {
     this.socket = socket;
 
     this.width = width;
     this.height = height;
 
     this.scene = scene;
+    this.camera = camera;
     this.renderer = renderer;
 
     this.drawing = drawing;
-    this.input = input;
+    this.viewport = viewport;
+    
+    this.animationFrameID = -1;
 }
 
-Sandbox.create = function (socket, container, canvas) {
+Sandbox.create = function (socket, container) {
     var width = Constants.CANVAS_WIDTH;
     var height = Constants.CANVAS_HEIGHT;
 
     var scene = new THREE.Scene();
+    var camera = new THREE.OrthographicCamera(-Viewport.CAMERA_FRUSTUM,
+                                              Viewport.CAMERA_FRUSTUM,
+                                              Viewport.CAMERA_FRUSTUM,
+                                              -Viewport.CAMERA_FRUSTUM,
+                                              0.1, 1000);
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(width, height);
     var rendererDOM = renderer.domElement;
 
-    var drawing = Drawing.create(scene);
-    var input = Input.create(canvas);
+    var drawing = Drawing.create(width, height, scene);
+    var viewport = Viewport.create(width, height, scene, camera);
+    
+    Input.applyEventHandlers(rendererDOM);
 
-    container.insertBefore(rendererDOM, canvas);
-    return new Sandbox(socket, width, height, scene, renderer, drawing, input);
+    container.appendChild(rendererDOM);
+    return new Sandbox(socket, width, height, scene, camera, renderer, drawing, viewport);
+};
+
+Sandbox.prototype.update = function () {
+    this.viewport.calibrate();
+
+    if (Input.MOUSE_MOVED) {
+        if (Input.LEFT_CLICK) {
+            var dragVector = new THREE.Vector2(Input.MOUSE[0] - Input.LAST_MOUSE[0],
+                                               Input.MOUSE[1] - Input.LAST_MOUSE[1]);
+            var dragVectorSpace = this.viewport.canvasVectorToSpace(dragVector);
+
+            dragVectorSpace.x *= -1;
+            dragVectorSpace.z *= -1;
+
+            if (Input.CONTROL) {
+                this.viewport.rotateCamera(dragVectorSpace);
+            } else {
+                this.viewport.panCamera(dragVectorSpace);
+            }
+        }
+    }
+
+    if (Input.SPACE) {
+        this.viewport.reset();
+    }
+};
+
+Sandbox.prototype.draw = function () {
+    this.renderer.render(this.scene, this.camera);
+};
+
+Sandbox.prototype.animate = function () {
+    var context = this;
+
+    this.animationFrameID = window.requestAnimationFrame(function () {
+        context.run();
+    });
+};
+
+Sandbox.prototype.run = function () {
+    this.update();
+    this.draw();
+    this.animate();
 };
