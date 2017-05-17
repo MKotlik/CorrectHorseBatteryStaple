@@ -2,6 +2,8 @@
 # SoftDev, Spring 2017
 # database.py - mongoDB interactions
 
+# TODO: merge does_user_exist into register_user, have it return a bool
+
 from pymongo import MongoClient
 import hashlib
 
@@ -127,15 +129,74 @@ def get_user(username):
 
 
 def add_owned_proj(username, projID):
-    pass
+    '''Adds projID of a user's owned project to their database entry
+    Args: username(str), projID (int)
+    Returns: True if user found and updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    # Add projID to ownedIDs list only if it isn't already in the set
+    update_result = users.update_one({'username': username},
+                                     {"$addToSet": {"ownedIDs": projID}})
+    print update_result
+    client.close()
+    if update_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to add previously attributed proj to user"
+        return True
 
 
 def add_contributed_proj(username, projID):
-    pass
+    '''Adds projID of a project the user contributed to to their database entry
+    Args: username(str), projID (int)
+    Returns: True if user found and updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    # Add projID to ownedIDs list only if it isn't already in the set
+    update_result = users.update_one({'username': username},
+                                     {"$addToSet": {"contributedIDs": projID}})
+    client.close()
+    if update_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to add previously attributed proj to user"
+        return True
 
 
 def update_password(username, password):
-    pass
+    '''Updates the specified user's password.
+    Args: username (str), password (str)
+    Returns: True if user found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    hashed_pass = hash_password(password)
+    update_result = users.update_one({'username': username},
+                                     {"$set": {"password": hashed_pass}})
+    client.close()
+    if update_result.modified_count == 0:
+        return False
+    else:
+        return True
+
+
+def remove_user(username):
+    '''Removes the specified user
+    Args: username (str)
+    Returns: True if user found & deleted, False otherwise (bool)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    delete_result = users.delete_one({'username': username})
+    client.close()
+    if delete_result.deleted_count == 0:
+        return False
+    else:
+        return True
 
 
 # ===== PROJECT FUNCTIONS ===== #

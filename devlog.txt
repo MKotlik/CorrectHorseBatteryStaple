@@ -57,3 +57,10 @@ jonalfD -- 2016-12-04 14:32
 - Added base template for html
 - Added custom css to overwrite some settings
 ==============================
+
+==============================
+ mishaK -- 2017-05-17 13:20
+
+- Added headings for all funcs to be added to database.py
+- Finished & tested all user funcs in database.py
+==============================
