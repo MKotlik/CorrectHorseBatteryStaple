@@ -2,7 +2,7 @@
 # SoftDev, Spring 2017
 # app.py - main server module
 
-# TODO: use flask-socketio for socketio backend
+# TODO: need some form of API protection, i.e. key in session for db requests
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import database
@@ -70,12 +70,13 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     pass
 
+
 @app.route("/test")
 def test():
     return render_template('editor.html')
-    
-# ===== AJAX ROUTES ===== #
 
+
+# ===== AJAX ROUTES ===== #
 
 @app.route("/ajaxlogin/", methods=["POST"])
 def ajaxlogin():
@@ -117,7 +118,6 @@ def ajaxsignup():
 
 
 # ===== LOGIN HELPERS ===== #
-
 
 def is_logged_in():
     return "username" in session

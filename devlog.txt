@@ -42,3 +42,32 @@ jonalfD -- 2016-12-04 14:32
 - Finished login & register funcs in database.py
 - Proposed schema for users & projects collections in database
 ==============================
+
+==============================
+ mishaK -- 2017-05-17 02:30
+
+- Added initdb() to create db, collections, and indices for username & projID
+- Added get_user() to retrieve user dict from db
+- Finalized db schema
+==============================
+
+==============================
+ jamesY -- 2017-05-17 02:30
+
+- Added base template for html
+- Added custom css to overwrite some settings
+==============================
+
+==============================
+ mishaK -- 2017-05-17 13:20
+
+- Added headings for all funcs to be added to database.py
+- Finished & tested all user funcs in database.py
+==============================
+
+==============================
+ mishaK -- 2017-05-17 18:27
+
+- Completed & tested all planned project funcs in database.py
+- Added & tested remove_user() database.py
+==============================

@@ -1,0 +1,14 @@
+.navbar {
+    margin-bottom: 0px;
+}
+
+#searchbar-li {
+    padding: 15px;
+
+}
+
+#searchbar {
+    font-size: 20px;
+    padding: 10px;
+    height: 30px;
+}
