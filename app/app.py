@@ -2,7 +2,7 @@
 # SoftDev, Spring 2017
 # app.py - main server module
 
-# TODO: use flask-socketio for socketio backend
+# TODO: need some form of API protection, i.e. key in session for db requests
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import database

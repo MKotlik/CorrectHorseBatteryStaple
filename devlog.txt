@@ -64,3 +64,10 @@ jonalfD -- 2016-12-04 14:32
 - Added headings for all funcs to be added to database.py
 - Finished & tested all user funcs in database.py
 ==============================
+
+==============================
+ mishaK -- 2017-05-17 18:27
+
+- Completed & tested all planned project funcs in database.py
+- Added & tested remove_user() database.py
+==============================

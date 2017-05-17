@@ -6,6 +6,7 @@
 
 from pymongo import MongoClient
 import hashlib
+import datetime
 
 ''' # ===== DATABASE SCHEMA ===== #
 users collection:
@@ -27,6 +28,8 @@ projects collection:
     - lastSaveTime (datetime-formatted time of last save to database)
     - description (description of project)
 - each project COULD also contain:
+    - access_rights (public - anyone can join as a contributor, or private -
+        only by invitation)
     - editHistory (dict or list of edits made between saves [differences
         between saves], so that changes could be rolled back. Like git.)
 
@@ -51,9 +54,14 @@ def initdb():
     users = db.users  # Create the users collection
     projects = db.projects  # Create the projects collection
     lastprojid = db.lastprojid  # Create the lastprojid collection
+
     # Create indices for faster traversal, in ascending order
     resultU = users.create_index('username')
     resultP = projects.create_index('projID')
+
+    # Insert a starting id of 0 into lastprojid
+    lastprojid.insert_one({"ID": 0})
+
     client.close()
     # PyMongo should throw error on failure, but return success as well
     return resultU == 'username_1' and resultP == 'projID_1'
@@ -201,26 +209,112 @@ def remove_user(username):
 
 # ===== PROJECT FUNCTIONS ===== #
 
+def get_project(projID):
+    '''Retrieves the specified project from the database.
+    Args: projID (int)
+    Returns: tuple containing success report and data dict (boolean, dict)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    proj_cursor = projects.find({'projID': projID})
+    if proj_cursor.count() == 0:
+        result = (False, {})
+    else:
+        result = (True, proj_cursor[0])
+    client.close()
+    return result
+
+
 def add_project(name, owner, description=''):
-    pass
+    '''Creates a new project, adds to database and returns it.
+    Args: name (str), owner (str), [optional] description (str)
+    Returns: a tuple containing success status (bool) and the project (dict)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    lastprojid = client["sculptio"].lastprojid
+    new_projID = lastprojid.find({})[0]["ID"] + 1  # Pull & inc for new id
+    lastprojid.update_one({}, {"$inc": {"ID": 1}})  # increment ID in db
+    time_now = datetime.datetime.utcnow()
+    project_dict = {"projID": new_projID, "name": name, "owner": owner,
+                    "description": description, "contributors": [owner],
+                    "timeCreated": time_now, "timeLastSaved": time_now}
+    project_dict["sculpture"] = [[]]  # Blank 2d array for now
+    projects.insert_one(project_dict)
+    return (True, project_dict)
 
 
 def add_contributor(projID, username):
-    pass
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    # Add username to contributors list only if it isn't already in the set
+    update_result = projects.update_one({'projID': projID},
+                                        {"$addToSet": {"contributors": username}})
+    client.close()
+    if update_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to add previously attributed user to proj"
+        return True
 
 
 def update_description(projID, description):
-    pass
+    '''Updates the specified project's description.
+    Args: projID (int), description (str)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {"description": description}})
+    client.close()
+    if update_result.modified_count == 0:
+        return False
+    else:
+        return True
 
 
 def update_project_name(projID, name):
-    pass
+    '''Updates the specified project's name.
+    Args: projID (int), name (str)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {"name": name}})
+    client.close()
+    if update_result.modified_count == 0:
+        return False
+    else:
+        return True
 
 
 def update_sculpture(projID, sculpture):
-    pass
+    '''Updates the specified project's sculpture array & save time, returns
+        a copy of the project as a dict.
+    Args: projID (int), sculpture (list of tuples)
+    Returns: tuple containing success status (bool) and the project (dict)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    time_now = datetime.datetime.utcnow()
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {"sculpture": sculpture,
+                                                  "timeLastSaved": time_now}})
+    if update_result.modified_count == 0:
+        client.close()
+        return (False, {})
+    else:
+        updated_dict = projects.find({"projID": projID})[0]
+        client.close()
+        return (True, updated_dict)
 
 
+# ===== CURRENTLY UNIMPLEMENTED FUNCTIONS ===== #
+
+"""
 def update_project(projID, name=None, owner=None, contributors=None,
                    description=None, sculpture=None):
     pass
@@ -234,3 +328,4 @@ def get_last_projID():
 
 def inc_last_projID():
     pass
+"""
