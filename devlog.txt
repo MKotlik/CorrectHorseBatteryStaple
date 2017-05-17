@@ -50,3 +50,10 @@ jonalfD -- 2016-12-04 14:32
 - Added get_user() to retrieve user dict from db
 - Finalized db schema
 ==============================
+
+==============================
+ jamesY -- 2017-05-17 02:30
+
+- Added base template for html
+- Added custom css to overwrite some settings
+==============================
