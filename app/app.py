@@ -104,17 +104,17 @@ def ajaxsignup():
     '''
     username = request.form["username"]
     password = request.form["password"]
-    # Check if username is taken
-    if database.does_user_exist(username):
-        return "taken"
     # Check if password meats reqs (in addition to client-side check)
-    elif not is_password_valid(password):
+    if not is_password_valid(password):
         return "badpass"
-    else:
+    elif database.add_user(username, password):
         # Automatically log user in
         session['username'] = username
         # Return "ok" to perform client-side redirect
         return "ok"
+    else:
+        # User already exists in db
+        return "taken"
 
 
 # ===== LOGIN HELPERS ===== #

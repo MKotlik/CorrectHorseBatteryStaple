@@ -2,8 +2,6 @@
 # SoftDev, Spring 2017
 # database.py - mongoDB interactions
 
-# TODO: merge does_user_exist into register_user, have it return a bool
-
 from pymongo import MongoClient
 import hashlib
 import datetime
@@ -56,8 +54,9 @@ def initdb():
     lastprojid = db.lastprojid  # Create the lastprojid collection
 
     # Create indices for faster traversal, in ascending order
-    resultU = users.create_index('username')
-    resultP = projects.create_index('projID')
+    # For development, indices are unique to catch duplicate insertion attempts
+    resultU = users.create_index('username', unique=True)
+    resultP = projects.create_index('projID', unique=True)
 
     # Insert a starting id of 0 into lastprojid
     lastprojid.insert_one({"ID": 0})
@@ -87,30 +86,23 @@ def is_login_valid(username, password):
         return False
 
 
-def register_user(username, password):
+def add_user(username, password):
     '''Registers the given user in the MongoDB database
     Args: username (str), password (str)
+    Password: true if username unique & user created, false otherwise (bool)
     '''
+    client = MongoClient()
+    db = client["sculptio"]
+    users = db["users"]
+    if users.find({'username': username}).count() > 0:
+        client.close()
+        return False
     hashed_pass = hash_password(password)
     new_user = {"username": username, "password": hashed_pass,
                 "ownedIDs": [], "contributedIDs": []}
-    client = MongoClient()
-    db = client["sculptio"]  # access db, or create it if it doesn't exist
-    users = db["users"]
     users.insert_one(new_user)
     client.close()
-
-
-def does_user_exist(username):
-    '''Checks whether a user with given name exists in the database'
-    Args: username (str), password (str)
-    Returns: boolean
-    '''
-    client = MongoClient()
-    users = client["sculptio"].users
-    result = users.find({'username': username}).count() > 0
-    client.close()
-    return result
+    return True
 
 
 def hash_password(unhashed):
@@ -328,4 +320,19 @@ def get_last_projID():
 
 def inc_last_projID():
     pass
+"""
+
+# ===== UNUSED FUNCTIONS ===== #
+
+"""
+def does_user_exist(username):
+    '''Checks whether a user with given name exists in the database'
+    Args: username (str), password (str)
+    Returns: boolean
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    result = users.find({'username': username}).count() > 0
+    client.close()
+    return result
 """

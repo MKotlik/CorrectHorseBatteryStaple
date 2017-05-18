@@ -78,3 +78,10 @@ jonalfD -- 2016-12-04 14:32
 - Finished base.html template
 - Started login.html
 ==============================
+
+==============================
+ mishaK -- 2017-05-18 12:20
+
+- Merged does_user_exist & add_user funcs
+- Made projects & users indices unique to catch possible duplication
+==============================
