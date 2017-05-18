@@ -2,12 +2,10 @@ function Input() {
     throw new Error('Input should not be instantiated!');
 }
 
-Input.EPSILON = 0.001;
 Input.LEFT_CLICK = false;
 Input.RIGHT_CLICK = false;
 Input.MOUSE = [-1, -1];
 Input.LAST_MOUSE = [-1, -1];
-Input.MOUSE_MOVED = false;
 Input.SHIFT = false;
 Input.CONTROL = false;
 Input.ALT = false;
@@ -33,13 +31,6 @@ Input.onMouseUp = function (e) {
 Input.onMouseMove = function (e) {
     Input.LAST_MOUSE = Input.MOUSE;
     Input.MOUSE = [e.offsetX, e.offsetY];
-
-    if (!(Math.abs(Input.MOUSE[0] - Input.LAST_MOUSE[0]) < Input.EPSILON)
-        || !(Math.abs(Input.MOUSE[1] - Input.LAST_MOUSE[1]) < Input.EPSILON)) {
-        Input.MOUSE_MOVED = true;
-    } else {
-        Input.MOUSE_MOVED = false;
-    }        
 };
 
 Input.onKeyDown = function (e) {

@@ -10,6 +10,8 @@ function Sandbox(socket, width, height, scene, camera, renderer, drawing, viewpo
 
     this.drawing = drawing;
     this.viewport = viewport;
+
+    this.lastMouse = [-1, -1];
     
     this.animationFrameID = -1;
 }
@@ -38,12 +40,10 @@ Sandbox.create = function (socket, container) {
 };
 
 Sandbox.prototype.update = function () {
-    this.viewport.calibrate();
-
-    if (Input.MOUSE_MOVED) {
+    if (Input.MOUSE != this.lastMouse) {
         if (Input.LEFT_CLICK) {
-            var dragVector = new THREE.Vector2(Input.MOUSE[0] - Input.LAST_MOUSE[0],
-                                               Input.MOUSE[1] - Input.LAST_MOUSE[1]);
+            var dragVector = new THREE.Vector2(Input.MOUSE[0] - this.lastMouse[0],
+                                               Input.MOUSE[1] - this.lastMouse[1]);
             var dragVectorSpace = this.viewport.canvasVectorToSpace(dragVector);
 
             dragVectorSpace.x *= -1;
@@ -60,6 +60,8 @@ Sandbox.prototype.update = function () {
     if (Input.SPACE) {
         this.viewport.reset();
     }
+
+    this.lastMouse = Input.MOUSE;
 };
 
 Sandbox.prototype.draw = function () {
