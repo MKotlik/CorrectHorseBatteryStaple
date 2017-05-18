@@ -71,7 +71,7 @@ def search(query):
     pass
 
 
-@app.route("/test")
+@app.route("/test/")
 def test():
     return render_template('editor.html')
 

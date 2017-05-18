@@ -71,3 +71,10 @@ jonalfD -- 2016-12-04 14:32
 - Completed & tested all planned project funcs in database.py
 - Added & tested remove_user() database.py
 ==============================
+
+==============================
+ jamesY -- 2017-05-18 12:04
+
+- Finished base.html template
+- Started login.html
+==============================
