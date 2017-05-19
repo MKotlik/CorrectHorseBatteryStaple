@@ -47,13 +47,15 @@ def logout():
     '''If logged in, logs user out, redirects to home'''
     if is_logged_in():
         session.pop('username')
-    redirect(url_for('home'))
+    return redirect(url_for('home'))
 
 
 @app.route("/project/<projID>")
 def project(projID):
     '''Displays editor for project specified by projID
     projID is generated when a new project is created'''
+    if not is_logged_in():
+        return redirect(url_for('login'))
     pass
 
 
@@ -61,6 +63,8 @@ def project(projID):
 def profile():
     '''Displays the profile of the currently logged in user'''
     # NOTE: Shows a "please log in" page or redirects to login if not logged in
+    if not is_logged_in():
+        return redirect(url_for('login'))
     pass
 
 
@@ -68,6 +72,8 @@ def profile():
 def search(query):
     '''Displays search results for given query'''
     # NOTE: should we have a search page w/o query as well? (/search/)
+    if not is_logged_in():
+        return redirect(url_for('login'))
     pass
 
 
