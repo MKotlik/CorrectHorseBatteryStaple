@@ -71,3 +71,24 @@ jonalfD -- 2016-12-04 14:32
 - Completed & tested all planned project funcs in database.py
 - Added & tested remove_user() database.py
 ==============================
+
+==============================
+ jamesY -- 2017-05-18 12:04
+
+- Finished base.html template
+- Started login.html
+==============================
+
+==============================
+ mishaK -- 2017-05-18 12:20
+
+- Merged does_user_exist & add_user funcs
+- Made projects & users indices unique to catch possible duplication
+==============================
+
+==============================
+ mishaK -- 2017-05-19 12:30
+
+- Added login checks & redirects to app.py project, profile, search
+- Planned out socketio funcitonality in socket_ideas.txt
+==============================

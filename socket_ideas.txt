@@ -1,0 +1,64 @@
+- what's the purpose of namespaces?
+
+- rooms? We could place all project collaborators in one room to notify them about users joining & leaving, sculpture saves, and metadata changes
+
+- if we use the same namespace, how do we identify which client sent a msg to the endpoint? A: Include a client ID (or just username) in every msg
+
+- how do we target a particular connected client with a message? Is responding to a client msg the only way of getting a msg from server to client?
+
+- we should store the projects currently being worked on in memory, aka in an object in app.py. saves time
+
+- how do we know when a connection to a client closes? Is lost w/o it properly closing?
+
+- room is automatically created for every open project, even those with only one connected collaborator
+
+- how do we react if user connects to work on a new proj vs a proj that's already open?
+
+- how do we EFFICIENTLY match users with projects and other collaborators?
+A: 1 - dict with usernames as keys and room IDs as (or tuple of room ID and lists of collaborator names) as values.
+2 - another dict with room IDs as keys, and project dicts as values (the current project store)
+
+TODO - create client events, server events, client msg template, server to client template, and server broadcast template
+
+# Objects
+# Note, set room id equal to projid
+# project_dict identical to
+Proposal 1:
+- users_rooms = {<clientID: <projID/room>}
+- rooms_projects = {<projID/room>: (<project_dict>, <active_collab_clientIDs)}
+- clientIDs_usernames = {<clientID: <username>}  # Is this necessary?
+
+# Events & Reactions:
+
+connect:
+  - Check that user is logged in (request from our website, not outside)
+      Either use is_logged_in() or check a magic session id
+  - If not logged in, return False
+  - Map clientID to username in clientIDs_usernames
+  - Wait for "join_proj" event within the connect block, or outside
+
+join_proj:
+  - Q: Do we need to check that the user is listed as a collab to allow access?
+  - Add user to the respective room (identified by projID), and to users_rooms
+  - If needed project not yet pulled, pull from db and add to rooms_projects
+  - Broadcast to room that user has joined (even if user is only active collab)
+
+disconnect:
+  - Q: If leaving user was last active collab, do we commit proj to memory?
+    I'm leaning towards yes rn
+  - If user is last active collab, commit proj to db & remove from rooms_projs
+  - If collabs remain, broadcast to room that the user has left
+  - Remove username & clientID from stores
+
+meta_change:
+# event fired when project metadata is changed (name, desc, owner, collabs)
+  - Change data should take the form of {"attribute": <new_value>}
+  - Apply change to project in rooms_projects
+  - Broadcast change info to room
+  - Commit project to db
+
+save:
+# event fired when sculpture is saved, thru button press or autosave
+  - Update project in rooms_projects with new sculpture data
+  - Broadcast change (w/ sculpture data, username, savetime) to room
+  - Commit project to db
