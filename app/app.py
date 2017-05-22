@@ -72,7 +72,7 @@ def profile():
     # NOTE: Shows a "please log in" page or redirects to login if not logged in
     if not is_logged_in():
         return redirect(url_for('login'))
-    pass
+    return render_template('profile.html')
 
 
 @app.route("/search/<query>")
@@ -81,7 +81,7 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     if not is_logged_in():
         return redirect(url_for('login'))
-    pass
+    return render_template('search.html')
 
 
 @app.route("/test/")
