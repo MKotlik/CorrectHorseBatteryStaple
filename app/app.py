@@ -117,17 +117,17 @@ def ajaxsignup():
     '''
     username = request.form["username"]
     password = request.form["password"]
-    # Check if password meats reqs (in addition to client-side check)
-    if not is_password_valid(password):
+    # Check if password meets reqs (in addition to client-side check)
+    if database.does_user_exist(username):
+        return "taken"
+    elif not is_password_valid(password):
         return "badpass"
-    elif database.add_user(username, password):
+    else:
+        database.add_user(username, password)
         # Automatically log user in
         session['username'] = username
         # Return "ok" to perform client-side redirect
         return "ok"
-    else:
-        # User already exists in db
-        return "taken"
 
 
 # ===== SOCKETIO ENDPOINTS ===== #
