@@ -7,6 +7,8 @@ function Viewport(width, height, scene, camera) {
     this.l = null;
     this.m = null;
     this.n = null;
+
+    this.displacement = null;
     this.distance = -1;
     this.focus = null;
 }
@@ -16,12 +18,19 @@ Viewport.Y_AXIS = new THREE.Vector3(0, 1, 0);
 Viewport.Z_AXIS = new THREE.Vector3(0, 0, 1);
 
 Viewport.CAMERA_FRUSTUM = 5;
-Viewport.CANVAS_TO_SPACE_FACTOR = 0.05;
 
 Viewport.DEFAULT_CAMERA_POSITION = new THREE.Vector3(5, 5, 5);
 Viewport.DEFAULT_CAMERA_FOCUS = new THREE.Vector3(0, 0, 0);
 
-Viewport.EPSILON_ANGLE = 0.01;
+Viewport.PAN_FACTOR = 0.15;
+Viewport.ORBIT_FACTOR = 0.01;
+Viewport.ZOOM_FACTOR = 0.05;
+Viewport.ACCELERATED_ZOOM_FACTOR = 0.5;
+
+Viewport.MIN_ZOOM = 0.1;
+Viewport.MAX_ZOOM = 10;
+
+Viewport.EPSILON_ANGLE = 0.1;
 Viewport.EPSILON_LENGTH = 0.01;
 
 Viewport.create = function (width, height, scene, camera) {
@@ -44,15 +53,18 @@ Viewport.combineVectors = function () {
 Viewport.prototype.initialize = function () {
     this.focus = Viewport.DEFAULT_CAMERA_FOCUS.clone();
     this.camera.position.copy(Viewport.DEFAULT_CAMERA_POSITION);
+    this.camera.zoom = 1;
 };
 
 
 Viewport.prototype.calibrate = function () {
-    this.distance = this.camera.position.distanceTo(this.focus);
+    this.displacement = this.camera.position.clone().sub(this.focus);
+    this.distance = this.displacement.length();
     this.camera.lookAt(this.focus);
     this.l = this.getX().applyEuler(this.camera.getWorldRotation());
     this.m = this.getY().applyEuler(this.camera.getWorldRotation());
     this.n = this.getZ().applyEuler(this.camera.getWorldRotation());
+    this.camera.updateProjectionMatrix();
 };
 
 Viewport.prototype.reset = function () {
@@ -90,19 +102,10 @@ Viewport.prototype.canvasVectorToSpace = function (vector) {
 };
 
 Viewport.prototype.panCamera = function (vector) {
-    vector.setLength(Viewport.CANVAS_TO_SPACE_FACTOR);
+    vector.setLength(Viewport.PAN_FACTOR / this.camera.zoom);
     this.camera.position.add(vector);
     this.focus.add(vector);
     this.calibrate();
-};
-
-Viewport.prototype.rotateAxes = function (axis, angle) {
-    this.l.applyAxisAngle(axis, angle);
-    this.m.applyAxisAngle(axis, angle);
-    this.n.applyAxisAngle(axis, angle);
-    console.log('l:', this.l);
-    console.log('m:', this.m);
-    console.log('n:', this.n);
 };
 
 Viewport.prototype.orbitCamera = function (vector) {
@@ -122,15 +125,20 @@ Viewport.prototype.orbitCamera = function (vector) {
     vector = Viewport.combineVectors(this.getL(compL * Math.sin(incline)),
                                      this.getM(compM));
 
-    console.log(vector);
-
     if (vector.length() > Viewport.EPSILON_LENGTH) {
         var axis = this.getN().clone().cross(vector).normalize();
-        var angle = vector.length() / (this.distance / 2)
-            * Viewport.CANVAS_TO_SPACE_FACTOR;
+        var angle = vector.length() * Viewport.ORBIT_FACTOR;
 
         this.camera.rotateOnAxis(axis, angle);
         this.camera.position.applyAxisAngle(axis, angle);
         this.calibrate();
     }
+};
+
+Viewport.prototype.zoomCamera = function (direction, accelerated) {
+    this.camera.zoom = clamp(
+        this.camera.zoom + direction
+            * (accelerated ? Viewport.ACCELERATED_ZOOM_FACTOR : Viewport.ZOOM_FACTOR),
+        Viewport.MIN_ZOOM, Viewport.MAX_ZOOM);
+    this.calibrate();
 };

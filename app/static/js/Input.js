@@ -5,12 +5,12 @@ function Input() {
 Input.LEFT_CLICK = false;
 Input.RIGHT_CLICK = false;
 Input.MOUSE = [-1, -1];
-Input.LAST_MOUSE = [-1, -1];
 Input.SHIFT = false;
 Input.CONTROL = false;
 Input.ALT = false;
 Input.SPACE = false;
 Input.MISC_KEYS = {};
+Input.WHEEL = 0;
 
 Input.onMouseDown = function (e) {
     if (e.which == 1) {
@@ -31,6 +31,10 @@ Input.onMouseUp = function (e) {
 Input.onMouseMove = function (e) {
     Input.LAST_MOUSE = Input.MOUSE;
     Input.MOUSE = [e.offsetX, e.offsetY];
+};
+
+Input.onMouseWheel = function (e) {
+    Input.WHEEL = e.deltaY;
 };
 
 Input.onKeyDown = function (e) {
@@ -82,12 +86,10 @@ Input.onKeyUp = function (e) {
 };
 
 Input.applyEventHandlers = function (element) {
-    element.addEventListener('mousedown', Input.onMouseDown);
-    element.addEventListener('mouseup', Input.onMouseUp);
-    element.addEventListener('mousemove', Input.onMouseMove);
+    window.addEventListener('mousemove', Input.onMouseMove);
     window.addEventListener('keyup', Input.onKeyUp);
     window.addEventListener('keydown', Input.onKeyDown);
-    element.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-    }, true);
+    element.addEventListener('mousedown', Input.onMouseDown);
+    window.addEventListener('mouseup', Input.onMouseUp);
+    element.addEventListener('wheel', Input.onMouseWheel);
 };

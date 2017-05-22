@@ -12,7 +12,7 @@ function Sandbox(socket, width, height, scene, camera, renderer, drawing, viewpo
     this.viewport = viewport;
 
     this.lastMouse = [-1, -1];
-    
+
     this.animationFrameID = -1;
 }
 
@@ -41,6 +41,7 @@ Sandbox.create = function (socket, container) {
 
 Sandbox.prototype.update = function () {
     this.viewport.calibrate();
+    
     if (Input.MOUSE != this.lastMouse) {
         if (Input.LEFT_CLICK) {
             var dragVector = new THREE.Vector2(-Input.MOUSE[0] + this.lastMouse[0],
@@ -58,11 +59,16 @@ Sandbox.prototype.update = function () {
         }
     }
 
+    if (Input.WHEEL) {
+        this.viewport.zoomCamera(-sign(Input.WHEEL), Input.CONTROL);
+    }
+    
     if (Input.SPACE) {
         this.viewport.reset();
     }
 
     this.lastMouse = Input.MOUSE;
+    Input.WHEEL = 0;
 };
 
 Sandbox.prototype.draw = function () {

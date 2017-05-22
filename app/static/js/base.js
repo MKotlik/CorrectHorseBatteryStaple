@@ -1,5 +1,15 @@
 var socket = io();
-var sandbox = Sandbox.create(socket, $('#container')[0]);
+var container = $('#container')[0];
+var sandbox = Sandbox.create(socket, container);
+
+container.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+}, true);
+
+container.addEventListener('wheel', function (e) {
+    e.preventDefault();
+}, true);
+
 sandbox.animate();
 
 var x = sandbox.drawing.renderBox(0, 0, 0, 1000, 0.05, 0.05, 'red');
