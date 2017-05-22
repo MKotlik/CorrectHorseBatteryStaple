@@ -40,19 +40,20 @@ Sandbox.create = function (socket, container) {
 };
 
 Sandbox.prototype.update = function () {
+    this.viewport.calibrate();
     if (Input.MOUSE != this.lastMouse) {
         if (Input.LEFT_CLICK) {
-            var dragVector = new THREE.Vector2(Input.MOUSE[0] - this.lastMouse[0],
+            var dragVector = new THREE.Vector2(-Input.MOUSE[0] + this.lastMouse[0],
                                                Input.MOUSE[1] - this.lastMouse[1]);
+
             var dragVectorSpace = this.viewport.canvasVectorToSpace(dragVector);
 
-            dragVectorSpace.x *= -1;
-            dragVectorSpace.z *= -1;
-
-            if (Input.CONTROL) {
-                this.viewport.rotateCamera(dragVectorSpace);
-            } else {
-                this.viewport.panCamera(dragVectorSpace);
+            if (dragVectorSpace.length() > 0) {
+                if (Input.CONTROL) {
+                    this.viewport.orbitCamera(dragVectorSpace);
+                } else {
+                    this.viewport.panCamera(dragVectorSpace);
+                }
             }
         }
     }
