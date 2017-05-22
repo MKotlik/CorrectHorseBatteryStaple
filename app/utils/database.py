@@ -86,6 +86,18 @@ def is_login_valid(username, password):
         return False
 
 
+def does_user_exist(username):
+    '''Checks whether a user with given name exists in the database'
+    Args: username (str), password (str)
+    Returns: boolean
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    result = users.find({'username': username}).count() > 0
+    client.close()
+    return result
+
+
 def add_user(username, password):
     '''Registers the given user in the MongoDB database
     Args: username (str), password (str)
@@ -94,9 +106,12 @@ def add_user(username, password):
     client = MongoClient()
     db = client["sculptio"]
     users = db["users"]
+    """
+    # Check performed in does_user_exist
     if users.find({'username': username}).count() > 0:
         client.close()
         return False
+    """
     hashed_pass = hash_password(password)
     new_user = {"username": username, "password": hashed_pass,
                 "ownedIDs": [], "contributedIDs": []}
@@ -325,14 +340,4 @@ def inc_last_projID():
 # ===== UNUSED FUNCTIONS ===== #
 
 """
-def does_user_exist(username):
-    '''Checks whether a user with given name exists in the database'
-    Args: username (str), password (str)
-    Returns: boolean
-    '''
-    client = MongoClient()
-    users = client["sculptio"].users
-    result = users.find({'username': username}).count() > 0
-    client.close()
-    return result
 """

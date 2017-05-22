@@ -6,11 +6,18 @@
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import database
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit, send
 
 app = Flask(__name__)
 app.secret_key = "horses"
 socketio = SocketIO(app)
+
+
+# ===== PROJECT STATE GLOBALS ===== #
+
+clients_rooms = {}  # Maps clientIDs to room names (projIDs)
+rooms_projects = {}  # Maps room names (projIDs) to (collaborators, proj_dict)
+clients_usernames = {}  # Maps clientIDs to usernames
 
 
 # ===== VISIBLE ROUTES ===== #
@@ -42,7 +49,7 @@ def signup():
     return render_template('signup.html')
 
 
-@app.route("/logout/", methods=["POST"])
+@app.route("/logout/")
 def logout():
     '''If logged in, logs user out, redirects to home'''
     if is_logged_in():
@@ -65,7 +72,7 @@ def profile():
     # NOTE: Shows a "please log in" page or redirects to login if not logged in
     if not is_logged_in():
         return redirect(url_for('login'))
-    pass
+    return render_template('profile.html')
 
 
 @app.route("/search/<query>")
@@ -74,7 +81,7 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     if not is_logged_in():
         return redirect(url_for('login'))
-    pass
+    return render_template('search.html')
 
 
 @app.route("/test/")
@@ -110,17 +117,44 @@ def ajaxsignup():
     '''
     username = request.form["username"]
     password = request.form["password"]
-    # Check if password meats reqs (in addition to client-side check)
-    if not is_password_valid(password):
+    # Check if password meets reqs (in addition to client-side check)
+    if database.does_user_exist(username):
+        return "taken"
+    elif not is_password_valid(password):
         return "badpass"
-    elif database.add_user(username, password):
+    else:
+        database.add_user(username, password)
         # Automatically log user in
         session['username'] = username
         # Return "ok" to perform client-side redirect
         return "ok"
-    else:
-        # User already exists in db
-        return "taken"
+
+
+# ===== SOCKETIO ENDPOINTS ===== #
+
+@socketio.on('connect')
+def handle_connection(socket):
+    pass
+
+
+@socketio.on('proj_request')
+def handle_proj_request(proj_request):
+    pass
+
+
+@socketio.on('disconnect')
+def handle_disconnect(data):
+    pass
+
+
+@socketio.on('meta_change')
+def handle_meta_change(change_data):
+    pass
+
+
+@socketio.on('save')
+def handle_save(save_data):
+    pass
 
 
 # ===== LOGIN HELPERS ===== #
