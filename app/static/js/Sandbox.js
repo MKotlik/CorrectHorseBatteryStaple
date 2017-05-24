@@ -42,8 +42,8 @@ Sandbox.create = function (socket, container) {
 Sandbox.prototype.update = function () {
     this.viewport.calibrate();
     
-    if (Input.MOUSE != this.lastMouse) {
-        if (Input.LEFT_CLICK) {
+    if (Input.RIGHT_CLICK) {
+        if (Input.MOUSE != this.lastMouse) {
             var dragVector = new THREE.Vector2(-Input.MOUSE[0] + this.lastMouse[0],
                                                Input.MOUSE[1] - this.lastMouse[1]);
 

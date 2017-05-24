@@ -143,7 +143,7 @@ def ajaxsignup():
 
 # ===== SOCKETIO ENDPOINTS ===== #
 
-@socketio.on('connect')
+@socketio.on('user_connect')
 def handle_connection(socket):
     pass
 
@@ -153,7 +153,7 @@ def handle_proj_request(proj_request):
     pass
 
 
-@socketio.on('disconnect')
+@socketio.on('user_disconnect')
 def handle_disconnect(data):
     pass
 
@@ -163,7 +163,7 @@ def handle_meta_change(change_data):
     pass
 
 
-@socketio.on('save')
+@socketio.on('save_project')
 def handle_save(save_data):
     pass
 
