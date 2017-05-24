@@ -6,28 +6,43 @@ from pymongo import MongoClient
 import hashlib
 import datetime
 
+# TODO: notify connected users if they get requst or are added to proj
+# NOTE: cannot transfer ownership as of now. Might be possible later.
+
 ''' # ===== DATABASE SCHEMA ===== #
 users collection:
 - each user document contains:
     - username
     - password
     - ownedIDs (list of projIDs of projects created by this user)
-    - contributedIDs (list of projIDs of projects contributed to by this user)
+    - permissions (list of tuples of (projID, permission) for this user,
+        excluding the projects that they own)
+    - contributedIDs (list of projIDs of projects contributed to by this user,
+        including the projects that they own)
+    - incomingRequests (list of join requests for projects owned by user,
+        each request is a tuple of (sendingUser, projID, timeSent))
+    - outgoingRequests (list of sent join requests for other projects,
+        each request is a tuple of (receivingUser, projID, timeSent))
+    - notifications (list of tuples of notif msgs (msg, timeReceived),
+        most msgs are project invite related)
 - projIDs are used to retrieve a user's projects from the projects collection
 
 projects collection:
 - each project document contains:
     - projID (unique numerical identifier for this project)
-    - projectName (non-unique name for this project)
-    - ownerName (username of project creator)
-    - contributorNames (list of usernames of contributors to project)
-    - creationTime (datetime-formatted time of when project was created)
+    - name (non-unique name for this project)
+    - owner (username of project creator)
+    - contributors (list of usernames of contributors to project)
+    - timeCreated (datetime-formatted time of when project was created)
     - sculpture (some representation of the actual model)
-    - lastSaveTime (datetime-formatted time of last save to database)
+    - timeLastSaved (datetime-formatted time of last save to database)
     - description (description of project)
+    - accessRights (true if public - anyone can join as a contributor,
+        or false if private - only by invitation)
+    - permittedUsers (list users with edit permissions (view, edit),
+        excluding owner)
+    - visibile (true if visible to public [default], false if hidden)
 - each project COULD also contain:
-    - access_rights (public - anyone can join as a contributor, or private -
-        only by invitation)
     - editHistory (dict or list of edits made between saves [differences
         between saves], so that changes could be rolled back. Like git.)
 
@@ -115,7 +130,9 @@ def add_user(username, password):
     """
     hashed_pass = hash_password(password)
     new_user = {"username": username, "password": hashed_pass,
-                "ownedIDs": [], "contributedIDs": []}
+                "ownedIDs": [], "contributedIDs": [], "permissions": [],
+                "incomingRequests": [], "outgoingRequests": [],
+                "notifications": []}
     users.insert_one(new_user)
     client.close()
     return True
@@ -246,7 +263,9 @@ def add_project(name, owner, description=''):
     time_now = datetime.datetime.utcnow()
     project_dict = {"projID": new_projID, "name": name, "owner": owner,
                     "description": description, "contributors": [owner],
-                    "timeCreated": time_now, "timeLastSaved": time_now}
+                    "timeCreated": time_now, "timeLastSaved": time_now,
+                    "accessRights": False, "visibile": True,
+                    "permittedUsers": []}
     project_dict["sculpture"] = [[]]  # Blank 2d array for now
     projects.insert_one(project_dict)
     return (True, project_dict)
