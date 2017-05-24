@@ -58,11 +58,12 @@ def initdb():
     resultU = users.create_index('username', unique=True)
     resultP = projects.create_index('projID', unique=True)
 
-    # Insert a starting id of 0 into lastprojid
-    lastprojid.insert_one({"ID": 0})
+    # Insert a starting id of 0 into lastprojid if ID entry doesnt yet exist
+    if lastprojid.find({}).count() == 0:
+        lastprojid.insert_one({"ID": 0})
 
     client.close()
-    # PyMongo should throw error on failure, but return success as well
+    # PyMongo should throw error on failure, but return success status as well
     return resultU == 'username_1' and resultP == 'projID_1'
 
 

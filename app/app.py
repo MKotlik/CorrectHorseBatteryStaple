@@ -2,7 +2,9 @@
 # SoftDev, Spring 2017
 # app.py - main server module
 
-# TODO: need some form of API protection, i.e. key in session for db requests
+# TODO: need some form of protection for socketio connections
+# TODO: need custom 404 page, and other HTTP error handling
+
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import database
@@ -18,6 +20,15 @@ socketio = SocketIO(app)
 clients_rooms = {}  # Maps clientIDs to room names (projIDs)
 rooms_projects = {}  # Maps room names (projIDs) to (collaborators, proj_dict)
 clients_usernames = {}  # Maps clientIDs to usernames
+
+
+# ===== ON STARTUP ===== #
+
+@app.before_first_request
+def initserver():
+    print "sculpt.io: Initializing database"
+    database.initdb()
+    print "sculpt.io: Database initialized"
 
 
 # ===== VISIBLE ROUTES ===== #
