@@ -4,6 +4,7 @@
 
 # TODO: need some form of protection for socketio connections
 # TODO: need custom 404 page, and other HTTP error handling
+# NOTE: we're going to need a lot more ajax endpoints
 
 
 from flask import Flask, render_template, request, session, url_for, redirect

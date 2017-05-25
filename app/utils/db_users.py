@@ -29,8 +29,8 @@ users collection:
 - projIDs are used to retrieve a user's projects from the projects collection
 '''
 
-# ===== LOGIN/REGISTER FUNCTIONS ===== #
 
+# ===== LOGIN/REGISTER FUNCTIONS ===== #
 
 def is_login_valid(username, password):
     '''Checks if given credentials match an existing user in the db
@@ -91,23 +91,7 @@ def hash_password(unhashed):
     return hashlib.md5("2017horsesW/StapledCorrect" + unhashed).hexdigest()
 
 
-# ===== USER FUNCTIONS ===== #
-
-def get_user(username):
-    '''Retrieves a dict with the specified user's data from the database
-    Args: username (str)
-    Returns: tuple containing success report and data dict (boolean, dict)
-    '''
-    client = MongoClient()
-    users = client["sculptio"].users
-    user_cursor = users.find({'username': username})
-    if user_cursor.count() == 0:
-        result = (False, {})
-    else:
-        result = (True, user_cursor[0])
-    client.close()
-    return result
-
+# ===== PROJECT-RELATED FUNCTIONS ===== #
 
 def add_owned_proj(username, projID):
     '''Adds projID of a user's owned project to their database entry
@@ -146,6 +130,73 @@ def add_contributed_proj(username, projID):
         # if update_result.modified_count == 0:
         # print "NOTICE: attempted to add previously attributed proj to user"
         return True
+
+
+def issue_request(requester, owner, projID):
+    request = [requester, owner, projID]
+    client = MongoClient()
+    users = client["sculptio"].users
+    # Add request to project owner's incomingRequests list
+    owner_result = users.update_one({'username': owner},
+                                    {"$addToSet": {"incomingRequests": request}})
+    # Add request to requester's outgoingRequests list
+    requester_result = users.update_one({'username': requester},
+                                        {"$addToSet": {"outgoingRequests": request}})
+    client.close()
+    if owner_result.matched_count == 0 or requester_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to add previously issued request"
+        return True
+
+
+def cancel_request(requester, owner, projID):
+    pass
+
+
+def accept_request(requester, owner, projID):
+    pass
+
+
+def update_permissions(permitee, owner, permission):
+    pass
+
+
+# ===== USER ACCOUNT FUNCTIONS ===== #
+
+def get_user(username):
+    '''Retrieves a dict with the specified user's data from the database
+    Args: username (str)
+    Returns: tuple containing success report and data dict (boolean, dict)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    user_cursor = users.find({'username': username})
+    if user_cursor.count() == 0:
+        result = (False, {})
+    else:
+        result = (True, user_cursor[0])
+    client.close()
+    return result
+
+
+def get_user_data(username):
+    '''Returns the user's non-sensitive data, excludes auth info
+    Args: username (str)
+    Returns: tuple containing success report and data dict (boolean, dict)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    user_cursor = users.find({'username': username})
+    if user_cursor.count() == 0:
+        result = (False, {})
+    else:
+        data = {i: user_cursor[0][i]
+                for i in user_cursor[0] if i != "password"}
+        result = (True, data)
+    client.close()
+    return result
 
 
 def update_password(username, password):

@@ -2,6 +2,8 @@
 # SoftDev, Spring 2017
 # database.py - general mongoDB interactions
 
+from pymongo import MongoClient
+
 
 # ===== GENERAL DATABASE FUNCTIONS ===== #
 
