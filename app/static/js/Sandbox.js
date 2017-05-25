@@ -8,6 +8,8 @@ function Sandbox(socket, width, height, scene, camera, renderer, drawing, viewpo
     this.camera = camera;
     this.renderer = renderer;
 
+    this.grains = [];
+    
     this.drawing = drawing;
     this.viewport = viewport;
 
@@ -37,6 +39,23 @@ Sandbox.create = function (socket, container) {
 
     container.appendChild(rendererDOM);
     return new Sandbox(socket, width, height, scene, camera, renderer, drawing, viewport);
+};
+
+Sandbox.prototype.addGrain = function (position, color) {
+    this.grains.push(Grain.create(position, color));
+};
+
+Sandbox.prototype.addBox = function (position, dimensions) {
+    var size = Constants.DEFAULT_GRAIN_SIZE;
+    console.log(position.x + dimensions.x, dimensions);
+    for (var x = position.x; x < position.x + dimensions.x; x += size) {
+        for (var y = position.y; y < position.y + dimensions.y; y += size) {
+            for (var z = position.z; z < position.z + dimensions.z; z += size) {
+                console.log(x, y, z);
+                this.addGrain(new THREE.Vector3(x, y, z));
+            }
+        }
+    }
 };
 
 Sandbox.prototype.update = function () {
@@ -72,6 +91,10 @@ Sandbox.prototype.update = function () {
 };
 
 Sandbox.prototype.draw = function () {
+    for (var i = 0; i < this.grains.length; i++) {
+        this.drawing.renderGrain(this.grains[i]);
+    }
+    
     this.renderer.render(this.scene, this.camera);
 };
 

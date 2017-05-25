@@ -12,7 +12,14 @@ container.addEventListener('wheel', function (e) {
 
 sandbox.animate();
 
-var x = sandbox.drawing.renderBox(0, 0, 0, 1000, 0.05, 0.05, 'red');
-var y = sandbox.drawing.renderBox(0, 0, 0, 0.05, 1000, 0.05, 'green');
-var z = sandbox.drawing.renderBox(0, 0, 0, 0.05, 0.05, 1000, 'blue');
-var box = sandbox.drawing.renderBox(1, 1, 1, 1, 1, 1, 'white');
+var x = sandbox.drawing.renderBox(new THREE.Vector3(0, 0, 0),
+                                  new THREE.Vector3(1000, 0.05, 0.05), 'red');
+
+var y = sandbox.drawing.renderBox(new THREE.Vector3(0, 0, 0),
+                                  new THREE.Vector3(0.05, 1000, 0.05), 'green');
+var z = sandbox.drawing.renderBox(new THREE.Vector3(0, 0, 0),
+                                  new THREE.Vector3(0.05, 0.05, 1000), 'blue');
+//sandbox.addBox(new THREE.Vector3(1, 1, 1),
+               //new THREE.Vector3(1, 1, 1));
+//sandbox.drawing.renderBox(new THREE.Vector3(0, 0, 0),
+                          //new THREE.Vector3(1, 1, 1), 'white');
