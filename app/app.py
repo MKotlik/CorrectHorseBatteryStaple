@@ -7,7 +7,7 @@
 
 
 from flask import Flask, render_template, request, session, url_for, redirect
-from utils import database
+from utils import db_general, db_users, db_projects
 from flask_socketio import SocketIO, emit, send
 
 app = Flask(__name__)
@@ -27,7 +27,7 @@ clients_usernames = {}  # Maps clientIDs to usernames
 @app.before_first_request
 def initserver():
     print "sculpt.io: Initializing database"
-    database.initdb()
+    db_general.initdb()
     print "sculpt.io: Database initialized"
 
 
@@ -111,7 +111,7 @@ def ajaxlogin():
     '''
     username = request.form["username"]
     password = request.form["password"]
-    if database.is_login_valid(username, password):
+    if db_users.is_login_valid(username, password):
         session['username'] = username
         return "ok"
     else:
@@ -129,12 +129,12 @@ def ajaxsignup():
     username = request.form["username"]
     password = request.form["password"]
     # Check if password meets reqs (in addition to client-side check)
-    if database.does_user_exist(username):
+    if db_users.does_user_exist(username):
         return "taken"
     elif not is_password_valid(password):
         return "badpass"
     else:
-        database.add_user(username, password)
+        db_users.add_user(username, password)
         # Automatically log user in
         session['username'] = username
         # Return "ok" to perform client-side redirect
