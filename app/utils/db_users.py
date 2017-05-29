@@ -6,7 +6,8 @@ from pymongo import MongoClient
 import hashlib
 import datetime
 
-# TODO: notify connected users if they get request or are added to proj
+# TODO: notify users of requests or notifications by sockets
+# TODO: refactor repetitive code (esp. permissions & general mongo overhead)
 # NOTE: cannot transfer ownership as of now. Might be possible later.
 
 # ===== DATABASE SCHEMA ===== #
@@ -51,7 +52,7 @@ def is_login_valid(username, password):
 
 
 def does_user_exist(username):
-    '''Checks whether a user with given name exists in the database'
+    '''Checks whether a user with given name exists in the database
     Args: username (str), password (str)
     Returns: boolean
     '''
@@ -70,15 +71,9 @@ def add_user(username, password):
     client = MongoClient()
     db = client["sculptio"]
     users = db["users"]
-    """
-    # Check performed in does_user_exist
-    if users.find({'username': username}).count() > 0:
-        client.close()
-        return False
-    """
     hashed_pass = hash_password(password)
     new_user = {"username": username, "password": hashed_pass,
-                "ownedIDs": [], "contributedIDs": [], "permissions": [],
+                "ownedIDs": [], "contributedIDs": [], "permissions": {},
                 "incomingRequests": [], "outgoingRequests": [],
                 "notifications": []}
     users.insert_one(new_user)
@@ -98,6 +93,7 @@ def add_owned_proj(username, projID):
     Args: username(str), projID (int)
     Returns: True if user found and updated, False otherwise (bool)
     '''
+    # TODO: consider merging this into add_project & creating change_owner()
     client = MongoClient()
     users = client["sculptio"].users
     # Add projID to ownedIDs list only if it isn't already in the set
@@ -133,6 +129,11 @@ def add_contributed_proj(username, projID):
 
 
 def issue_request(requester, owner, projID):
+    '''
+    Adds collaboration request for proj to requester's & owner's request lists
+    Args: requester (str), owner (str), projID (int)
+    Returns: True if users found and updated, False otherwise (bool)
+    '''
     request = [requester, owner, projID]
     client = MongoClient()
     users = client["sculptio"].users
@@ -152,15 +153,103 @@ def issue_request(requester, owner, projID):
 
 
 def cancel_request(requester, owner, projID):
-    pass
+    '''
+    Removes collaboration request from requester's & owner's request lists
+    Args: requester (str), owner (str), projID (int)
+    Returns: True if users found and updated, False otherwise (bool)
+    '''
+    request = [requester, owner, projID]
+    client = MongoClient()
+    users = client["sculptio"].users
+    # Remove request from project owner's incomingRequests list
+    owner_result = users.update_one({'username': owner},
+                                    {"$pull": {"incomingRequests": request}})
+    # Remove request from requester's outgoingRequests list
+    requester_result = users.update_one({'username': requester},
+                                        {"$pull": {"outgoingRequests": request}})
+    client.close()
+    if owner_result.matched_count == 0 or requester_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to remove nonexistent request"
+        return True
 
 
-def accept_request(requester, owner, projID):
-    pass
+def accept_request(requester, owner, projID, level="edit"):
+    '''
+    Adds permission for proj & level to requester, notifies them, and
+    removes requests.
+    Args: requester (str), onwer (str), projID (int), level (str) [opt]
+    Returns: True if users found and updated, False otherwise (bool)
+    '''
+    # Gives requester edit permissions by default
+    # NOTE: should we check whether the request is in the db? or assume right?
+    client = MongoClient()
+    users = client["sculptio"].users
+    # Add permission to requester's permission's set
+    proj_q = 'permissions.' + str(projID)
+    requester_result = users.update_one({'username': requester},
+                                        {"$set": {proj_q: level}})
+    # Remove request from requester's outgoingRequests list
+    users.update_one({'username': requester},
+                     {"$pull": {"outgoingRequests": request}})
+    # Add notification about request acceptance to user's notif list
+    notification = (owner, projID, level, datetime.datetime.utcnow())
+    users.update_one({'username': requester},
+                     {"$addToSet": {"notifications": notification}})
+    # Remove request from project owner's incomingRequests list
+    owner_result = users.update_one({'username': owner},
+                                    {"$pull": {"incomingRequests": request}})
+    client.close()
+    if requester_result.matched_count == 0 or owner_result.matched_count == 0:
+        return False
+    else:
+        # if requester_result.modified_count == 0:
+        # print "NOTICE: attempted to accept nonexistent or accepted request
+        return True
 
 
-def update_permissions(permitee, owner, permission):
-    pass
+def update_permissions(permitee, owner, projID, level):
+    '''
+    Updates permitee's permission for given project, notifies them.
+    Args: requester (str), onwer (str), projID (int), level (str)
+    Returns: True if permitee found and updated, False otherwise (bool)
+    '''
+    permission = (projID, level)
+    client = MongoClient()
+    users = client["sculptio"].users
+    proj_q = 'permissions.' + str(projID)
+    update_result = users.update_one({'username': permitee},
+                                     {'$set': {proj_q: level}})
+    client.close()
+    if update_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to changed nonexistent or same permission
+        return True
+
+
+def remove_permissions(permitee, owner, projID):
+    '''
+    Removes permitee's permission to collaborate on given proj
+    Args: requester (str), onwer (str), projID (int), level
+    Returns: True if permitee found and updated, False otherwise (bool)
+    '''
+    permission = (projID, level)
+    client = MongoClient()
+    users = client["sculptio"].users
+    proj_q = 'permissions.' + str(projID)
+    update_result = users.update_one({'username': permitee},
+                                     {'$unset': {proj_q: level}})
+    client.close()
+    if update_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to changed nonexistent permission
+        return True
 
 
 # ===== USER ACCOUNT FUNCTIONS ===== #
