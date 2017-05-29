@@ -27,6 +27,7 @@ users collection:
         each request is a tuple of (receivingUser, projID, timeSent))
     - notifications (list of tuples of notif msgs (msg, timeReceived),
         most msgs are project invite related)
+    - hasUnread (bool marking presence of unread notifs)
 - projIDs are used to retrieve a user's projects from the projects collection
 '''
 
@@ -75,7 +76,7 @@ def add_user(username, password):
     new_user = {"username": username, "password": hashed_pass,
                 "ownedIDs": [], "contributedIDs": [], "permissions": {},
                 "incomingRequests": [], "outgoingRequests": [],
-                "notifications": []}
+                "notifications": [], "hasUnread": False}
     users.insert_one(new_user)
     client.close()
     return True
@@ -127,6 +128,8 @@ def add_contributed_proj(username, projID):
         # print "NOTICE: attempted to add previously attributed proj to user"
         return True
 
+
+# ===== REQUEST-RELATED FUNCTIONS ===== #
 
 def issue_request(requester, owner, projID):
     '''
@@ -198,6 +201,9 @@ def accept_request(requester, owner, projID, level="edit"):
     notification = (owner, projID, level, datetime.datetime.utcnow())
     users.update_one({'username': requester},
                      {"$addToSet": {"notifications": notification}})
+    # Increments unread notification count
+    users.update_one({'username': requester},
+                     {"$set": {"hasUnread": True}})
     # Remove request from project owner's incomingRequests list
     owner_result = users.update_one({'username': owner},
                                     {"$pull": {"incomingRequests": request}})
@@ -209,6 +215,8 @@ def accept_request(requester, owner, projID, level="edit"):
         # print "NOTICE: attempted to accept nonexistent or accepted request
         return True
 
+
+# ===== PERMISSION-RELATED FUNCTIONS ===== #
 
 def update_permissions(permitee, owner, projID, level):
     '''
@@ -222,6 +230,13 @@ def update_permissions(permitee, owner, projID, level):
     proj_q = 'permissions.' + str(projID)
     update_result = users.update_one({'username': permitee},
                                      {'$set': {proj_q: level}})
+    # Add notification about permissions change to user's notif list
+    notification = (owner, projID, level, datetime.datetime.utcnow())
+    users.update_one({'username': requester},
+                     {"$addToSet": {"notifications": notification}})
+    # Increments unread notification count
+    users.update_one({'username': requester},
+                     {"$set": {"hasUnread": True}})
     client.close()
     if update_result.matched_count == 0:
         return False
@@ -243,12 +258,48 @@ def remove_permissions(permitee, owner, projID):
     proj_q = 'permissions.' + str(projID)
     update_result = users.update_one({'username': permitee},
                                      {'$unset': {proj_q: level}})
+    # TODO: notify user about permission removal!!!
+
     client.close()
     if update_result.matched_count == 0:
         return False
     else:
         # if update_result.modified_count == 0:
         # print "NOTICE: attempted to changed nonexistent permission
+        return True
+
+
+# ===== NOTIFICATON-RELATED FUNCTIONS ===== #
+
+def get_has_unread(username):
+    '''
+    Get whether user has unread notifications
+    Args: username (str)
+    Returns: tuple containing success report and data dict (boolean, dict)
+    '''
+    (search_status, user) = get_user_data(username)
+    if search_status is False:
+        return (False, None)  # THIS IS A NONE VALUE, WATCH OUT
+    else:
+        return (True, user["hasUnread"])
+
+
+def update_has_unread(username):
+    '''
+    Marks user's notifications as all read
+    Args: username (str)
+    Returns: tuple containing success report and data dict (boolean, dict)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    update_result = users.update_one({'username': username},
+                                     {"$set": {"hasUnread": False}})
+    client.close()
+    if update_result.matched_count == 0:
+        return False
+    else:
+        # if update_result.modified_count == 0:
+        # print "NOTICE: attempted to set user's hasUnread to current value"
         return True
 
 
