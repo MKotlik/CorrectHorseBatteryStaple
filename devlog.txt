@@ -92,3 +92,23 @@ jonalfD -- 2016-12-04 14:32
 - Added login checks & redirects to app.py project, profile, search
 - Planned out socketio funcitonality in socket_ideas.txt
 ==============================
+
+==============================
+ mishaK -- 2017-05-22 02:45
+
+- Finished login & register pages (with pswrd verification & ajax!)
+==============================
+
+==============================
+ mishaK -- 2017-05-23 22:15
+ 
+- Added database initialization before first request
+==============================
+
+==============================
+ mishaK -- 2017-05-29 18:30
+
+- Split database.py into three files (general, users, projects)
+- Finished & tested request, permissions, and notification functionality
+  in db_users
+==============================

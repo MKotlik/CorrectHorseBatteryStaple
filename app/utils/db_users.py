@@ -100,7 +100,6 @@ def add_owned_proj(username, projID):
     # Add projID to ownedIDs list only if it isn't already in the set
     update_result = users.update_one({'username': username},
                                      {"$addToSet": {"ownedIDs": projID}})
-    print update_result
     client.close()
     if update_result.matched_count == 0:
         return False
@@ -188,6 +187,7 @@ def accept_request(requester, owner, projID, level="edit"):
     '''
     # Gives requester edit permissions by default
     # NOTE: should we check whether the request is in the db? or assume right?
+    request = [requester, owner, projID]
     client = MongoClient()
     users = client["sculptio"].users
     # Add permission to requester's permission's set
@@ -232,10 +232,10 @@ def update_permissions(permitee, owner, projID, level):
                                      {'$set': {proj_q: level}})
     # Add notification about permissions change to user's notif list
     notification = (owner, projID, level, datetime.datetime.utcnow())
-    users.update_one({'username': requester},
+    users.update_one({'username': permitee},
                      {"$addToSet": {"notifications": notification}})
     # Increments unread notification count
-    users.update_one({'username': requester},
+    users.update_one({'username': permitee},
                      {"$set": {"hasUnread": True}})
     client.close()
     if update_result.matched_count == 0:
@@ -249,17 +249,16 @@ def update_permissions(permitee, owner, projID, level):
 def remove_permissions(permitee, owner, projID):
     '''
     Removes permitee's permission to collaborate on given proj
-    Args: requester (str), onwer (str), projID (int), level
+    Args: requester (str), onwer (str), projID (int)
     Returns: True if permitee found and updated, False otherwise (bool)
     '''
-    permission = (projID, level)
     client = MongoClient()
     users = client["sculptio"].users
     proj_q = 'permissions.' + str(projID)
+    # The value used in the unset query doesn't matter
     update_result = users.update_one({'username': permitee},
-                                     {'$unset': {proj_q: level}})
+                                     {'$unset': {proj_q: ""}})
     # TODO: notify user about permission removal!!!
-
     client.close()
     if update_result.matched_count == 0:
         return False
