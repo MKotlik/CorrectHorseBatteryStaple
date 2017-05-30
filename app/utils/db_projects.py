@@ -88,6 +88,18 @@ def remove_project(projID):
         return True
 
 
+def get_projects():
+    '''Retrieves list of all projects in the database
+    Returns: tuple containing success report and list of projects (bool, dict)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    proj_cursor = projects.find({})
+    result = list(proj_cursor)
+    client.close()
+    return result
+
+
 # ===== CONTRIBUTOR FUNCTIONS ===== #
 
 def add_contributor(projID, username):

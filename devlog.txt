@@ -90,13 +90,13 @@ jonalfD -- 2016-12-04 14:32
  mishaK -- 2017-05-19 12:30
 
 - Added login checks & redirects to app.py project, profile, search
-- Planned out socketio funcitonality in socket_ideas.txt
+- Planned out socketio functionality in socket_ideas.txt
 ==============================
 
 ==============================
  mishaK -- 2017-05-22 02:45
 
-- Finished login & register pages (with pswrd verification & ajax!)
+- Finished login & register pages (with password verification & ajax!)
 ==============================
 
 ==============================
@@ -112,4 +112,5 @@ jonalfD -- 2016-12-04 14:32
 - Finished & tested request, permissions, and notification functionality
   in db_users
 - Added & tested access, visibility, & permitted users methods in db_projects
+- Added methods to get lists of all users and projects
 ==============================

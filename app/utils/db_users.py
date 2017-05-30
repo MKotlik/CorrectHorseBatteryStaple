@@ -338,6 +338,18 @@ def get_user_data(username):
     return result
 
 
+def get_users():
+    '''Retrieves list of all users in the database
+    Returns: tuple containing success report and list of users (bool, dict)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    user_cursor = users.find({})
+    result = list(user_cursor)
+    client.close()
+    return result
+
+
 def update_password(username, password):
     '''Updates the specified user's password.
     Args: username (str), password (str)
