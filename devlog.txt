@@ -13,7 +13,6 @@ jonalfD -- 2016-12-04 14:32
  jamesY --
 ==============================
 
-
 ==============================
  All -- 2017-05-12 07:30
 
@@ -41,6 +40,13 @@ jonalfD -- 2016-12-04 14:32
 
 - Finished login & register funcs in database.py
 - Proposed schema for users & projects collections in database
+==============================
+
+==============================
+ nickN -- 2017-05-17 12:30
+
+- Worked to determine math for the camera
+- Began developing functions to shift, rotate and zoom
 ==============================
 
 ==============================
@@ -97,6 +103,20 @@ jonalfD -- 2016-12-04 14:32
  mishaK -- 2017-05-22 02:45
 
 - Finished login & register pages (with password verification & ajax!)
+==============================
+
+==============================
+ nickN -- 2017-05-17 12:30
+
+- Worked with Kenneth to bugfix math for the camera
+- Fixed rotation when camera angle was near vertical
+==============================
+
+==============================
+ nickN -- 2017-05-19 12:30
+
+- More camera bugfixing with Kenneth
+- Stabilized rotation speed in the vertical direction
 ==============================
 
 ==============================
