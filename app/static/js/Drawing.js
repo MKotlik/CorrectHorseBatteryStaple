@@ -1,11 +1,10 @@
-function Drawing(width, height, scene) {
-    this.width = width;
-    this.height = height;
+function Drawing(scene) {
     this.scene = scene;
 }
 
-Drawing.create = function (width, height, scene) {
-    return new Drawing(width, height, scene);
+Drawing.create = function () {
+    var scene = new THREE.Scene();
+    return new Drawing(scene);
 };
 
 Drawing.prototype.renderGrain = function (grain) {

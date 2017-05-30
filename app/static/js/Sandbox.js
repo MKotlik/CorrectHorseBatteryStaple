@@ -1,101 +1,68 @@
-function Sandbox(socket, width, height, scene, camera, renderer, drawing, viewport) {
+function Sandbox(socket, renderer, camera, controls, drawing) {
     this.socket = socket;
 
-    this.width = width;
-    this.height = height;
-
-    this.scene = scene;
-    this.camera = camera;
     this.renderer = renderer;
+    this.camera = camera;
+    this.controls = controls;
 
+    this.drawing = drawing;
+    
     this.grains = [];
     
-    this.drawing = drawing;
-    this.viewport = viewport;
-
     this.lastMouse = [-1, -1];
 
     this.animationFrameID = -1;
 }
 
 Sandbox.create = function (socket, container) {
-    var width = Constants.CANVAS_WIDTH;
-    var height = Constants.CANVAS_HEIGHT;
-
-    var scene = new THREE.Scene();
-    var camera = new THREE.OrthographicCamera(-Viewport.CAMERA_FRUSTUM,
-                                              Viewport.CAMERA_FRUSTUM,
-                                              Viewport.CAMERA_FRUSTUM,
-                                              -Viewport.CAMERA_FRUSTUM,
-                                              0.1, 1000);
     var renderer = new THREE.WebGLRenderer();
-    renderer.setSize(width, height);
+    renderer.setSize(Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
     var rendererDOM = renderer.domElement;
 
-    var drawing = Drawing.create(width, height, scene);
-    var viewport = Viewport.create(width, height, scene, camera);
-    
+    var camera = new THREE.OrthographicCamera(-Constants.CAMERA_FRUSTUM,
+                                              Constants.CAMERA_FRUSTUM,
+                                              Constants.CAMERA_FRUSTUM,
+                                              -Constants.CAMERA_FRUSTUM,
+                                              Constants.NEAR_PLANE,
+                                              Constants.FAR_PLANE);
+    camera.position.copy(Constants.DEFAULT_CAMERA_POSITION);
+    camera.lookAt(Constants.DEFAULT_CAMERA_FOCUS);
+
+    var controls = new THREE.OrbitControls(camera, rendererDOM);
+
+    var drawing = Drawing.create();
+
     Input.applyEventHandlers(rendererDOM);
 
     container.appendChild(rendererDOM);
-    return new Sandbox(socket, width, height, scene, camera, renderer, drawing, viewport);
+    
+    var sandbox = new Sandbox(socket, renderer, camera, controls, drawing);
+    sandbox.controls.addEventListener('change', function (e) {
+        sandbox.render();
+    });
+    return sandbox;
 };
 
 Sandbox.prototype.addGrain = function (position, color) {
-    this.grains.push(Grain.create(position, color));
+    var grain = Grain.create(position, color);
+    this.grains.push(grain);
+    return grain;
 };
 
 Sandbox.prototype.addBox = function (position, dimensions) {
     var size = Constants.DEFAULT_GRAIN_SIZE;
-    console.log(position.x + dimensions.x, dimensions);
     for (var x = position.x; x < position.x + dimensions.x; x += size) {
         for (var y = position.y; y < position.y + dimensions.y; y += size) {
             for (var z = position.z; z < position.z + dimensions.z; z += size) {
-                console.log(x, y, z);
-                this.addGrain(new THREE.Vector3(x, y, z));
+                var grain = this.addGrain(new THREE.Vector3(x, y, z));
+                this.drawing.renderGrain(grain);
             }
         }
     }
 };
 
-Sandbox.prototype.update = function () {
-    this.viewport.calibrate();
-    
-    if (Input.RIGHT_CLICK) {
-        if (Input.MOUSE != this.lastMouse) {
-            var dragVector = new THREE.Vector2(-Input.MOUSE[0] + this.lastMouse[0],
-                                               Input.MOUSE[1] - this.lastMouse[1]);
-
-            var dragVectorSpace = this.viewport.canvasVectorToSpace(dragVector);
-
-            if (dragVectorSpace.length() > 0) {
-                if (Input.CONTROL) {
-                    this.viewport.orbitCamera(dragVectorSpace);
-                } else {
-                    this.viewport.panCamera(dragVectorSpace);
-                }
-            }
-        }
-    }
-
-    if (Input.WHEEL) {
-        this.viewport.zoomCamera(-sign(Input.WHEEL), Input.CONTROL);
-    }
-    
-    if (Input.SPACE) {
-        this.viewport.reset();
-    }
-
-    this.lastMouse = Input.MOUSE;
-    Input.WHEEL = 0;
-};
-
-Sandbox.prototype.draw = function () {
-    for (var i = 0; i < this.grains.length; i++) {
-        this.drawing.renderGrain(this.grains[i]);
-    }
-    
-    this.renderer.render(this.scene, this.camera);
+Sandbox.prototype.render = function () {    
+    this.renderer.render(this.drawing.scene, this.camera);
 };
 
 Sandbox.prototype.animate = function () {
@@ -107,7 +74,6 @@ Sandbox.prototype.animate = function () {
 };
 
 Sandbox.prototype.run = function () {
-    this.update();
-    this.draw();
+    this.render();
     this.animate();
 };
