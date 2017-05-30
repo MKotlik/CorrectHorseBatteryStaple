@@ -98,6 +98,8 @@ def search(query):
 
 @app.route("/test/")
 def test():
+    if not is_logged_in():
+        return redirect(url_for('login'))
     return render_template('editor.html')
 
 
