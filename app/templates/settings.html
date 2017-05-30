@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block icon_bar %}
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+{% endblock icon_bar %}
+
+{% block nav_links %}
+<li><a href="/profile/">Profile</a></li>
+<li><a href="/test">Editor</a></li>
+<li><a href="/logout/">Logout</a></li>
+{% endblock nav_links %}
+
+{% block body %}
+<div class="panel panel-default">
+  <div class="panel-body">
+    <form id="changePassword" action="" method="post">
+      <div class="form-group">
+	<label for="oldPassword">Old Password</label>
+	<input type="password" class="form-control" id="oldPassword" placeholder="Old Password" required>
+	<label for="newPassword">New Password</label>
+	
+<input type="password" class="form-control" id="newPassword" placeholder="New Password" required>
+	<label for="newConfirmPassword">Confirm Password</label>
+	<input type="password" class="form-control" id="newConfirmPassword" placeholder="New Password" required>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock body %}
