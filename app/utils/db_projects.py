@@ -67,10 +67,25 @@ def add_project(name, owner, description=''):
                     "description": description, "contributors": [owner],
                     "timeCreated": time_now, "timeLastSaved": time_now,
                     "accessRights": False, "visibile": True,
-                    "permittedUsers": []}
+                    "permittedUsers": {}}
     project_dict["sculpture"] = [[]]  # Blank 2d array for now
     projects.insert_one(project_dict)
     return (True, project_dict)
+
+
+def remove_project(projID):
+    '''Removes the specified project
+    Args: projID (int)
+    Returns: True if project found & deleted, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    delete_result = projects.delete_one({'projID': projID})
+    client.close()
+    if delete_result.deleted_count == 0:
+        return False
+    else:
+        return True
 
 
 # ===== CONTRIBUTOR FUNCTIONS ===== #
@@ -112,16 +127,33 @@ def update_visibility(projID, visibility):
     client.close()
     return update_result.matched_count > 0
 
-def add_permitted_user(projID, username, level):
-    pass
-
-
-def remove_permitted_user(projID, username, level):
-    pass
-
 
 def update_permitted_user(projID, username, level):
-    pass
+    '''Updates permissions for given user in project
+    Args: projID (int), username (str), level (str)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    user_q = "permittedUsers." + username
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {user_q: level}})
+    client.close()
+    return update_result.matched_count > 0
+
+
+def remove_permitted_user(projID, username):
+    '''Removes permissions for given user from project
+    Args: projID (int), username (str), level (str)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    user_q = "permittedUsers." + username
+    update_result = projects.update_one({'projID': projID},
+                                        {"$unset": {user_q: ""}})
+    client.close()
+    return update_result.matched_count > 0
 
 
 # ===== PROJECT METADATA FUNCTIONS ===== #

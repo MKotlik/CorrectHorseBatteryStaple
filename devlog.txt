@@ -101,7 +101,7 @@ jonalfD -- 2016-12-04 14:32
 
 ==============================
  mishaK -- 2017-05-23 22:15
- 
+
 - Added database initialization before first request
 ==============================
 
@@ -111,4 +111,5 @@ jonalfD -- 2016-12-04 14:32
 - Split database.py into three files (general, users, projects)
 - Finished & tested request, permissions, and notification functionality
   in db_users
+- Added & tested access, visibility, & permitted users methods in db_projects
 ==============================

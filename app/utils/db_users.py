@@ -17,8 +17,8 @@ users collection:
     - username
     - password
     - ownedIDs (list of projIDs of projects created by this user)
-    - permissions (list of tuples of (projID, permission) for this user,
-        excluding the projects that they own)
+    - permissions (dict of permissions for for this user, with projID as key,
+        and permission level as value, excluding the projects that they own)
     - contributedIDs (list of projIDs of projects contributed to by this user,
         including the projects that they own)
     - incomingRequests (list of join requests for projects owned by user,
@@ -246,7 +246,7 @@ def update_permissions(permitee, owner, projID, level):
         return True
 
 
-def remove_permissions(permitee, owner, projID):
+def remove_permissions(permitee, projID, ownwer=""):
     '''
     Removes permitee's permission to collaborate on given proj
     Args: requester (str), onwer (str), projID (int)
