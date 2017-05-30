@@ -18,9 +18,8 @@ socketio = SocketIO(app)
 
 # ===== PROJECT STATE GLOBALS ===== #
 
-clients_rooms = {}  # Maps clientIDs to room names (projIDs)
+users_rooms = {}  # Maps clientIDs to room names (projIDs)
 rooms_projects = {}  # Maps room names (projIDs) to (collaborators, proj_dict)
-clients_usernames = {}  # Maps clientIDs to usernames
 
 
 # ===== ON STARTUP ===== #
@@ -78,13 +77,13 @@ def project(projID):
     pass
 
 
-@app.route("/profile/")
+@app.route("/settings/")
 def profile():
-    '''Displays the profile of the currently logged in user'''
+    '''Displays the settings for the currently logged in user'''
     # NOTE: Shows a "please log in" page or redirects to login if not logged in
     if not is_logged_in():
         return redirect(url_for('login'))
-    return render_template('profile.html')
+    return render_template('settings.html')
 
 
 @app.route("/search/<query>")
@@ -190,3 +189,15 @@ def is_password_valid(password):
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)
+
+# === UNUSED CODE ===
+
+#
+#
+# @app.route("/profile/")
+# def profile():
+#     '''Displays the profile of the currently logged in user'''
+#     # NOTE: Shows a "please log in" page or redirects to login if not logged in
+#     if not is_logged_in():
+#         return redirect(url_for('login'))
+#     return render_template('profile.html')
