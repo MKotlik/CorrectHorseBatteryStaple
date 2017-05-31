@@ -1,11 +1,12 @@
-function Grain(position, color) {
-    this.position = position;
-    this.color = color || Constants.DEFAULT_GRAIN_COLOR
-    this.size = Constants.DEFAULT_GRAIN_SIZE;
-    this.dimensions = new THREE.Vector3(this.size, this.size, this.size);
+function Grain(x, y, z, color) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.color = color || Constants.DEFAULT_GRAIN_COLOR;
+    this.size = Constants.GRAIN_SIZE;
 }
 
-Grain.create = function (position, color) {
-    return new Grain(position, color);
+Grain.create = function (x, y, z, color) {
+    return new Grain(x, y, z, color);
 };
 

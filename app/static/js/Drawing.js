@@ -8,13 +8,13 @@ Drawing.create = function () {
 };
 
 Drawing.prototype.renderGrain = function (grain) {
-    this.renderBox(grain.position, grain.dimensions, grain.color);
+    this.renderBox(grain.x, grain.y, grain.z,
+                   grain.size, grain.size, grain.size,
+                   grain.color);
 };
 
-Drawing.prototype.renderBox = function (position, dimensions, color) {
-    var geometry = new THREE.BoxGeometry(dimensions.x,
-                                         dimensions.y,
-                                         dimensions.z);
+Drawing.prototype.renderBox = function (x, y, z, l, w, h, color) {
+    var geometry = new THREE.BoxGeometry(l, w, h);
     
     var material = new THREE.MeshBasicMaterial({
         color: color
@@ -22,7 +22,9 @@ Drawing.prototype.renderBox = function (position, dimensions, color) {
     
     var mesh = new THREE.Mesh(geometry, material);
 
-    mesh.position.copy(position);
+    mesh.position.x = x;
+    mesh.position.y = y;
+    mesh.position.z = z;
     
     this.scene.add(mesh);
     return mesh;
