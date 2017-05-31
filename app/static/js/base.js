@@ -10,12 +10,9 @@ container.addEventListener('wheel', function (e) {
     e.preventDefault();
 }, true);
 
-sandbox.initialize();
-
-var x = sandbox.drawing.renderBox(0, 0, 0, 1000, 0.05, 0.05, 'red');
-var y = sandbox.drawing.renderBox(0, 0, 0, 0.05, 1000, 0.05, 'green');
-var z = sandbox.drawing.renderBox(0, 0, 0, 0.05, 0.05, 1000, 'blue');
-sandbox.addBox(1, 1, 1, 1, 1, 1);
-//sandbox.drawing.renderBox(0, 0, 0, 1, 1, 1), 'white';
-
-sandbox.render();
+sandbox.initialize(function () {
+    //this.addBox(0, 0, 0, 10, 0.1, 0.1, 'red');
+    //this.addBox(0, 0, 0, 0.1, 10, 0.1, 'green');
+    //this.addBox(0, 0, 0, 0.1, 0.1, 10, 'blue');
+    this.addBox(-0.5, -0.5, -0.5, 1, 1, 1, true);
+});

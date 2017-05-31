@@ -4,12 +4,12 @@ function Constants() {
 
 Constants.CANVAS_WIDTH = 800;
 Constants.CANVAS_HEIGHT = 800;
+Constants.WORLD_LIMIT = 2.5;
 
 Constants.DEFAULT_GRAIN_COLOR = '#FFFFFF';
-Constants.GRAIN_SIZE = 0.05;
-Constants.GRAINS_PER_UNIT = Math.round(1 / Constants.GRAIN_SIZE);
-Constants.MAX_GRAIN_COORDINATE = 10;
-Constants.MAX_GRAINS = Constants.GRAINS_PER_UNIT * Constants.MAX_GRAIN_COORDINATE;
+Constants.GRAINS_PER_UNIT = 10;
+Constants.GRAIN_SIZE = 1 / Constants.GRAINS_PER_UNIT;
+Constants.MAX_GRAIN_COORD = Constants.GRAINS_PER_UNIT * Constants.WORLD_LIMIT;
 
 Constants.CAMERA_FRUSTUM = 5;
 Constants.NEAR_PLANE = 0.1;
@@ -17,3 +17,12 @@ Constants.FAR_PLANE = 1000;
 
 Constants.DEFAULT_CAMERA_POSITION = new THREE.Vector3(5, 5, 5);
 Constants.DEFAULT_CAMERA_FOCUS = new THREE.Vector3(0, 0, 0);
+Constants.DEFAULT_CAMERA_ZOOM = 2;
+
+Constants.GRAIN_GEOMETRY = new THREE.BoxGeometry(Constants.GRAIN_SIZE,
+                                                 Constants.GRAIN_SIZE,
+                                                 Constants.GRAIN_SIZE);
+
+Constants.GRAIN_MATERIAL = new THREE.MeshPhongMaterial({
+    color: Constants.DEFAULT_GRAIN_COLOR
+});
