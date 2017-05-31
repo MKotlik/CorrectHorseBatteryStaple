@@ -47,3 +47,7 @@ footer {
     padding: 0;
     color: #AEF3E7;
 }
+
+#change-password-panel {
+    border: 0;
+}
