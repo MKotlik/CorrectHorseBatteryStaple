@@ -140,6 +140,16 @@ def ajaxsignup():
         # Return "ok" to perform client-side redirect
         return "ok"
 
+@app.route("/ajaxchangepassword/", methods=["POST"])
+def ajaxchangepassword():
+    username = session["username"]
+    newPassword = request.form["newPassword"]
+
+    if not is_password_valid(newPassword):
+        return "badpass"
+    else:
+        db_users.update_password(username, newPassword)
+        return "ok"
 
 # ===== SOCKETIO ENDPOINTS ===== #
 

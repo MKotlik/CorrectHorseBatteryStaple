@@ -29,12 +29,6 @@ $(document).ready(function() {
     });
   });
 
-  $("#registerClose").click(function(e) {
-    $("#registerForm").find("input[type=text], input[type=password]").val("");
-    $("#registerStatus").html('');
-    clearValidateIcon();
-  });
-
   /* Validate password */
   function validatePassword() {
     if ($("#registerConfirmPassword").val() !== "") {
@@ -47,9 +41,6 @@ $(document).ready(function() {
       /* get icon on one line */
       /* genetic cars? */
       if ($("#registerPassword").val() == "" || $("#registerConfirmPassword").val() != $("#registerPassword").val()) {
-        console.log(escape($("#registerPassword").val()));
-        console.log(escape($("#registerConfirmPassword").val()));
-        console.log($("#registerConfirmPassword").val() == $("#registerPassword").val());
         /* Checked that passwords dont match */
         if (group.hasClass("has-success")) {
           group.removeClass("has-success");

@@ -134,3 +134,10 @@ jonalfD -- 2016-12-04 14:32
 - Added & tested access, visibility, & permitted users methods in db_projects
 - Added methods to get lists of all users and projects
 ==============================
+
+==============================
+jamesY -- 2017-05-31 12:21
+
+- Started and finished password change
+- Started project listing on home page
+==============================
