@@ -33,8 +33,8 @@ lastprojid collection:
     used to get the total number of projects created
 '''
 
-# ===== PROJECT FUNCTIONS ===== #
 
+# ===== OBJECT & CREATION FUNCTIONS ===== #
 
 def get_project(projID):
     '''Retrieves the specified project from the database.
@@ -67,11 +67,40 @@ def add_project(name, owner, description=''):
                     "description": description, "contributors": [owner],
                     "timeCreated": time_now, "timeLastSaved": time_now,
                     "accessRights": False, "visibile": True,
-                    "permittedUsers": []}
+                    "permittedUsers": {}}
     project_dict["sculpture"] = [[]]  # Blank 2d array for now
     projects.insert_one(project_dict)
     return (True, project_dict)
 
+
+def remove_project(projID):
+    '''Removes the specified project
+    Args: projID (int)
+    Returns: True if project found & deleted, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    delete_result = projects.delete_one({'projID': projID})
+    client.close()
+    if delete_result.deleted_count == 0:
+        return False
+    else:
+        return True
+
+
+def get_projects():
+    '''Retrieves list of all projects in the database
+    Returns: tuple containing success report and list of projects (bool, dict)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    proj_cursor = projects.find({})
+    result = list(proj_cursor)
+    client.close()
+    return result
+
+
+# ===== CONTRIBUTOR FUNCTIONS ===== #
 
 def add_contributor(projID, username):
     client = MongoClient()
@@ -80,13 +109,66 @@ def add_contributor(projID, username):
     update_result = projects.update_one({'projID': projID},
                                         {"$addToSet": {"contributors": username}})
     client.close()
-    if update_result.matched_count == 0:
-        return False
-    else:
-        # if update_result.modified_count == 0:
-        # print "NOTICE: attempted to add previously attributed user to proj"
-        return True
+    return update_result.matched_count > 0
 
+
+# ===== PERMISSIONS FUNCTIONS ===== #
+
+def update_access_rights(projID, publicity):
+    '''Updates the project's access rights
+    Args: projID (int), publicity (bool)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {"accessRights": publicity}})
+    client.close()
+    return update_result.matched_count > 0
+
+
+def update_visibility(projID, visibility):
+    '''Updates the project's visibility
+    Args: projID (int), visibility (bool)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {"visibile": visibility}})
+    client.close()
+    return update_result.matched_count > 0
+
+
+def update_permitted_user(projID, username, level):
+    '''Updates permissions for given user in project
+    Args: projID (int), username (str), level (str)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    user_q = "permittedUsers." + username
+    update_result = projects.update_one({'projID': projID},
+                                        {"$set": {user_q: level}})
+    client.close()
+    return update_result.matched_count > 0
+
+
+def remove_permitted_user(projID, username):
+    '''Removes permissions for given user from project
+    Args: projID (int), username (str), level (str)
+    Returns: True if project found & updated, False otherwise (bool)
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    user_q = "permittedUsers." + username
+    update_result = projects.update_one({'projID': projID},
+                                        {"$unset": {user_q: ""}})
+    client.close()
+    return update_result.matched_count > 0
+
+
+# ===== PROJECT METADATA FUNCTIONS ===== #
 
 def update_description(projID, description):
     '''Updates the specified project's description.
@@ -98,10 +180,7 @@ def update_description(projID, description):
     update_result = projects.update_one({'projID': projID},
                                         {"$set": {"description": description}})
     client.close()
-    if update_result.modified_count == 0:
-        return False
-    else:
-        return True
+    return update_result.matched_count > 0
 
 
 def update_project_name(projID, name):
@@ -114,11 +193,10 @@ def update_project_name(projID, name):
     update_result = projects.update_one({'projID': projID},
                                         {"$set": {"name": name}})
     client.close()
-    if update_result.modified_count == 0:
-        return False
-    else:
-        return True
+    return update_result.matched_count > 0
 
+
+# ===== SCULPTURE FUNCTIONS ===== #
 
 def update_sculpture(projID, sculpture):
     '''Updates the specified project's sculpture array & save time, returns
@@ -132,7 +210,7 @@ def update_sculpture(projID, sculpture):
     update_result = projects.update_one({'projID': projID},
                                         {"$set": {"sculpture": sculpture,
                                                   "timeLastSaved": time_now}})
-    if update_result.modified_count == 0:
+    if update_result.matched_count == 0:
         client.close()
         return (False, {})
     else:

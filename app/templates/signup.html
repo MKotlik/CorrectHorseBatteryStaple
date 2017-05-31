@@ -23,18 +23,18 @@
       </div>
       <form id="registerForm" action="/ajaxsignup/" method="post">
         <div class="form-group">
-          <input type="text" class="form-control" id="registerUsername" name="username" placeholder="Username" required>
           <label for="registerUsername">Username</label>
+	  <input type="text" class="form-control" id="registerUsername" name="username" placeholder="Username" required>
         </div>
         <div class="form-group">
-          <input type="password" class="form-control" id="registerPassword" name="password" placeholder="Password" required>
           <label for="registerPassword">Password</label>
+	  <input type="password" class="form-control" id="registerPassword" name="password" placeholder="Password" required>
         </div>
         <div class="form-group" id="confirmPasswordGroup">
           <!-- <span><input type="password" class="form-control" id="registerConfirmPassword" name="confirmPassword" placeholder="Enter password again" required><span id="confirmPasswordIcon"></span></span> -->
-          <input type="password" class="form-control" id="registerConfirmPassword" name="confirmPassword" placeholder="Enter password again" required>
-          <span id="confirmPasswordIcon" class="glyphicon form-control-feedback hidden"></span>
           <label for="registerConfirmPassword">Confirm Password</label>
+	  <input type="password" class="form-control" id="registerConfirmPassword" name="confirmPassword" placeholder="Enter password again" required>
+          <span id="confirmPasswordIcon" class="glyphicon form-control-feedback hidden"></span>
         </div>
         <button id="registerFormButton" type="submit" class="btn btn-default">Submit</button>
       </form>

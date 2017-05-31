@@ -27,6 +27,10 @@ footer {
     color: #AEF3E7;
 }
 
+.panel {
+    background: inherit;
+}
+
 .border-container {
     background: #8EE3EF;
     padding: 0;
