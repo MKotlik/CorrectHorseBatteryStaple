@@ -24,20 +24,16 @@ TODO - create client events, server events, client msg template, server to clien
 # Note, set room id equal to projid
 # project_dict identical to
 Proposal 1:
-- users_rooms = {<clientID: <projID/room>}
+- users_rooms = {<username>: <projID/room>}
 - rooms_projects = {<projID/room>: (<project_dict>, <active_collab_clientIDs)}
-- clientIDs_usernames = {<clientID: <username>}  # Is this necessary?
 
-# Events & Reactions:
+# Server-side Events & Reactions:
 
-connect:
+user_connect(projID, username?):
   - Check that user is logged in (request from our website, not outside)
       Either use is_logged_in() or check a magic session id
-  - If not logged in, return False
-  - Map clientID to username in clientIDs_usernames
-  - Wait for "join_proj" event within the connect block, or outside
-
-join_proj:
+  - If not logged in, return False (refuse connection, handle on client end by
+    displaying error msg/modal and auto-redirecting user to login)
   - Q: Do we need to check that the user is listed as a collab to allow access?
   - Add user to the respective room (identified by projID), and to users_rooms
   - If needed project not yet pulled, pull from db and add to rooms_projects
@@ -62,3 +58,9 @@ save:
   - Update project in rooms_projects with new sculpture data
   - Broadcast change (w/ sculpture data, username, savetime) to room
   - Commit project to db
+
+update:
+# event fired when the sculpture is updated by a user
+  (add/remove block, add/remove shape, change color, etc)
+  - Simply broadcasts the change to all room members
+  - MUST BE AS FAST AS POSSIBLE

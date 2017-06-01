@@ -6,6 +6,10 @@ from pymongo import MongoClient
 import hashlib
 import datetime
 
+# TODO: REORGANIZE MODULES TO BETTER REFLECT USER-PROJECT CONNECTIONS
+# TODO: MAKE FUNCTION HEADERS CONSISTENT, ORDER ARGS BY PRIORITY
+# TODO: BROKEN LINKS - ENSURE THAT REMOVED PROJECTS ARE GONE FROM USERS' LISTS
+
 # TODO: notify users of requests or notifications by sockets
 # TODO: refactor repetitive code (esp. permissions & general mongo overhead)
 # NOTE: cannot transfer ownership as of now. Might be possible later.
@@ -126,6 +130,71 @@ def add_contributed_proj(username, projID):
         # if update_result.modified_count == 0:
         # print "NOTICE: attempted to add previously attributed proj to user"
         return True
+
+
+def get_owned_projects(username):
+    '''Get list of metadata of the user's owned projects
+    Args: username(str)
+    Returns: tuple containing success report and proj metadata (boolean, list)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    projects = client["sculptio"].projects
+    user_cursor = users.find({'username': username})  # Find user dict
+    if user_cursor.count() == 0:
+        client.close()
+        return (False, [])
+    else:
+        owned_projs = []
+        for projID in user_cursor[0]['ownedIDs']:  # Iterate over owned projs
+            proj_cursor = projects.find({'projID': projID})
+            if proj_cursor.count() == 0:  # If somehow projID is a dead end
+                print "sculptio ERROR: user's owned projID doesn't match any\
+                existing project."
+                client.close()
+                return (False, [])
+            else:
+                proj = proj_cursor[0]
+                owned_projs.append({'projID': projID, 'name': proj['name'],
+                                    'owner': proj["owner"],
+                                    'timeCreated': proj['timeCreated'],
+                                    'timeLastSaved': proj['timeLastSaved']})
+        return (True, owned_projs)
+
+
+def get_permitted_projects(username):
+    '''Get list of metadata of proj the user contributed to or has access to
+    Args: username(str)
+    Returns: tuple containing success report and proj metadata (boolean, list)
+    '''
+    client = MongoClient()
+    users = client["sculptio"].users
+    projects = client["sculptio"].projects
+    user_cursor = users.find({'username': username})  # Find user dict
+    if user_cursor.count() == 0:
+        client.close()
+        return (False, [])
+    else:
+        permit_projs = []
+        # Get set of contributed IDs and permitted IDs
+        contrib_ids = user_cursor[0]['contributedIDs']
+        permit_ids = list(user_cursor[0]['permissions'])
+        # Get the set union of the above two sets
+        all_ids = contrib_ids + [i for i in permit_ids if i not in contrib_ids]
+        for projID in all_ids:  # Iterate over non-owned IDs
+            proj_cursor = projects.find({'projID': projID})
+            if proj_cursor.count() == 0:  # If somehow projID is a dead end
+                print "sculptio ERROR: user's contrib projID doesn't match any\
+                existing project."
+                client.close()
+                return (False, [])
+            else:
+                proj = proj_cursor[0]
+                permit_projs.append({'projID': projID, 'name': proj['name'],
+                                     'owner': proj["owner"],
+                                     'timeCreated': proj['timeCreated'],
+                                     'timeLastSaved': proj['timeLastSaved']})
+        return (True, permit_projs)
 
 
 # ===== REQUEST-RELATED FUNCTIONS ===== #
