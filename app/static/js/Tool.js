@@ -3,8 +3,9 @@ function Tool(name, options) {
     this.options = options;
 }
 
-Tool.create = function (name, options, functions) {
+Tool.create = function (name, options) {
     var tool = new Tool(name, options);
+    return tool;
 };
 
 Tool.prototype.click = function (e) {

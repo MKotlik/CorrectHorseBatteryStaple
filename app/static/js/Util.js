@@ -9,23 +9,11 @@ function sign(n) {
 }
 
 function clamp(n, min, max) {
-    if (min > max) {
+    if (max && min > max) {
         return clamp(n, max, min);
     }
-    
-    if (min) {
-        if (max) {
-            return Math.min(Math.max(n, min), max);
-        } else {
-            return Math.max(n, min);
-        }
-    } else {
-        if (max) {
-            return Math.min(n, max);
-        } else {
-            return n;
-        }
-    }
+
+    return Math.min(Math.max(n, min), max);
 }
 
 function interpolate(x1, y1, x2, y2) {
@@ -54,6 +42,18 @@ function interpolate(x1, y1, x2, y2) {
     return ret;
 }
 
+function toGrainVector(worldVector) {
+    return new THREE.Vector3(toGrainCoord(worldVector.x),
+                             toGrainCoord(worldVector.y),
+                             toGrainCoord(worldVector.z));
+}
+
+function toWorldCoord(grainVector) {
+    return new THREE.Vector3(toWorldCoord(grainVector.x),
+                             toWorldCoord(grainVector.y),
+                             toWorldCoord(grainVector.z));
+}
+
 function toGrainCoord(worldCoordinate) {
     return toGrainLength(worldCoordinate) + Constants.MAX_GRAIN_COORD;
 }
@@ -73,4 +73,30 @@ function toGrainLength(worldLength) {
 
 function toWorldLength(grainLength) {
     return grainLength / Constants.GRAINS_PER_UNIT;
+}
+
+function pointsInRadius(x, y, z, r) {
+    var points = [];
+    
+    for (var i = -r; i <= r; i++) {
+        for (var j = -r; j <= r; j++) {
+            for (var k = -r; k <= r; k++) {
+                if (i * i + j * j + k * k <= r * r) {
+                    points.push([x + i, y + j, z + k]);
+                }
+            }
+        }
+    }
+
+    return points;
+}
+
+function sumVectorList(list) {
+    var ret = new THREE.Vector3();
+
+    for (var vector of list) {
+        ret.add(vector);
+    }
+
+    return ret;
 }
