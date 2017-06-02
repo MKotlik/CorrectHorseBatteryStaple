@@ -48,7 +48,7 @@ function toGrainVector(worldVector) {
                              toGrainCoord(worldVector.z));
 }
 
-function toWorldCoord(grainVector) {
+function toWorldVector(grainVector) {
     return new THREE.Vector3(toWorldCoord(grainVector.x),
                              toWorldCoord(grainVector.y),
                              toWorldCoord(grainVector.z));
@@ -76,8 +76,12 @@ function toWorldLength(grainLength) {
 }
 
 function pointsInRadius(x, y, z, r) {
-    var points = [];
+    if (r < 1) {
+        return [[x, y, z]]
+    }
     
+    var points = [];
+
     for (var i = -r; i <= r; i++) {
         for (var j = -r; j <= r; j++) {
             for (var k = -r; k <= r; k++) {

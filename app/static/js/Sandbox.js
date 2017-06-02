@@ -47,12 +47,15 @@ Sandbox.create = function (socket, container) {
 
     var scene = new THREE.Scene();
 
-    var light = new THREE.PointLight('#FFFFFF', 0.6, 0, 3);
+    var light = new THREE.PointLight('#FFFFFF', 1, 20, 2);
     light.position.copy(camera.position);
     camera.add(light);
     scene.add(camera);
     
-    light = new THREE.AmbientLight('#888888');
+    light = new THREE.AmbientLight('#FFFFFF', 0.5);
+    scene.add(light);
+
+    light = new THREE.DirectionalLight('#FFFFFF', 0.2);
     scene.add(light);
 
     var raycaster = new THREE.Raycaster();
@@ -168,40 +171,35 @@ Sandbox.prototype.initialize = function (task) {
             var gy = toGrainCoord(first.object.position.y);
             var gz = toGrainCoord(first.object.position.z);
             var gr = carve.options.radius;
+            var gr2 = Math.round(gr / 2);
             var i, j, k;
 
-            var sphere = this.grainsInRadius(gx, gy, gz, gr);
+            var sample = this.grainsInRadius(gx, gy, gz, gr2);
 
-            if (sphere.length > 0) {
-                var center, normal;
+            if (sample.length > 0) {
+                var center = sumVectorList(sample.map(grain => grain.position))
+                        .divideScalar(sample.length);
 
                 var normal;
 
-                if (sphere.length == 1) {
+                if (center.distanceTo(first.object.position) < 0.01) {
                     normal = first.face.normal;
                 } else {
-                    center = sumVectorList(sphere.map(grain => grain.position))
-                        .divideScalar(sphere.length);
                     normal = first.object.position.clone().sub(center).normalize();
                 }
 
-                var depth = 1;
-                var neighbors;
-                var startGrain, endGrain, currentGrain;
+                var sphere = this.grainsInRadius(gx, gy, gz, gr);
+                var toRemove = [];
                 
                 for (var base of sphere) {
-                    if (this.isBoundaryGrain(base)) {
-                        startGrain = toGrainVector(base.position);
-                        endGrain = startGrain.clone()
-                            .sub(normal.clone().multiplyScalar(depth));
-
-                        for (var alpha = 0; alpha < depth; alpha++) {
-                            currentGrain = startGrain.clone().lerp(endGrain, alpha / depth);
-                            this.removeGrain(currentGrain.x,
-                                             currentGrain.y,
-                                             currentGrain.z);
-                        }
+                    if (this.isOutwardInDirection(base, normal)) {
+                        toRemove.push(base);
                     }
+                }
+
+                for (var grain of toRemove) {
+                    var gp = toGrainVector(grain.position);
+                    this.removeGrain(gp.x, gp.y, gp.z);
                 }
             }
         }
@@ -220,36 +218,31 @@ Sandbox.prototype.initialize = function (task) {
             var gy = toGrainCoord(first.object.position.y);
             var gz = toGrainCoord(first.object.position.z);
             var gr = build.options.radius;
+            var gr2 = Math.round(gr / 2);
 
-            var sphere = this.grainsInRadius(gx, gy, gz, gr);
+            var sample = this.grainsInRadius(gx, gy, gz, gr2);
 
-            if (sphere.length > 0) {
-                var center, normal;
+            if (sample.length > 0) {
+                var center = sumVectorList(sample.map(grain => grain.position))
+                        .divideScalar(sample.length);
 
                 var normal;
 
-                if (sphere.length == 1) {
+                if (center.distanceTo(first.object.position) < 0.01) {
                     normal = first.face.normal;
                 } else {
-                    center = sumVectorList(sphere.map(grain => grain.position))
-                        .divideScalar(sphere.length);
                     normal = first.object.position.clone().sub(center).normalize();
                 }
 
-                var height = 1;
+                var sphere = this.grainsInRadius(gx, gy, gz, gr);
+                
                 var startGrain, endGrain, currentGrain;
                 
                 for (var base of sphere) {
-                    if (this.isBoundaryGrain(base)) {
-                        startGrain = toGrainVector(base.position);
-                        endGrain = startGrain.clone().add(normal.clone().multiplyScalar(height));
-                        
-                        for (var alpha = 0; alpha <= height; alpha++) {
-                            currentGrain = startGrain.clone().lerp(endGrain, alpha / height);
-                            this.addGrain(currentGrain.x,
-                                          currentGrain.y,
-                                          currentGrain.z);
-                        }
+                    if (this.isOutwardInDirection(base, normal)) {
+                        var start = toGrainVector(base.position);
+                        var end = start.clone().add(normal);
+                        this.addGrain(end.x, end.y, end.z)
                     }
                 }
             }
@@ -329,6 +322,42 @@ Sandbox.prototype.isBoundaryGrain = function (grain) {
     return neighbors.length < 7;
 };
 
+Sandbox.prototype.getOutwardNormals = function (grain) {
+    var normals = [];
+    
+    if (this.isBoundaryGrain(grain)) {
+        for (var i = 0; i < grain.geometry.faces.length; i += 2) {
+            var normal = grain.geometry.faces[i].normal;
+            //console.log(toGrainVector(grain.position));
+            var grainVector = toGrainVector(grain.position).add(normal);
+            var index = toGrainIndex(grainVector.x,
+                                     grainVector.y,
+                                     grainVector.z);
+            
+            if (!this.grains[index]) {
+                //console.log(grainVector, normal);
+                normals.push(normal);
+            }
+        }
+    }
+
+    return normals;
+};    
+
+Sandbox.prototype.isOutwardInDirection = function (grain, vector) {
+    if (this.isBoundaryGrain(grain)) {
+        var normals = this.getOutwardNormals(grain);
+
+        for (var normal of normals) {
+            if (normal.angleTo(vector) < Math.PI / 2) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
+
 Sandbox.prototype.addBox = function (x, y, z, l, w, h, solid) {
     var gx = toGrainCoord(x);
     var gy = toGrainCoord(y);
@@ -357,6 +386,7 @@ Sandbox.prototype.addBox = function (x, y, z, l, w, h, solid) {
 Sandbox.prototype.grainsInRadius = function (gx, gy, gz, gr) {
     var grains = [];
     var coords = pointsInRadius(gx, gy, gz, gr);
+    gr = Math.round(gr);
     var i, j, k;
 
     for ([i, j, k] of coords) {
