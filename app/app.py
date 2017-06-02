@@ -42,6 +42,7 @@ def root():
 @app.route("/home/")
 def home():
     '''Displays the homepage, diff versions based on login status'''
+    db_projects.add_project('project_test',session['username'],'test project')
     if is_logged_in():
         return render_template('home_user.html',owned_projects=display_projects(session['username']),permitted_projects=display_contributions(session['username']))
     else:
@@ -198,6 +199,7 @@ def display_projects(username):#displays a user's own projects
     retstr = ''
     for project in own_projects[1]:
         retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+    print retstr
     return retstr
 
 def display_contributions(username):#displays projects that a user can contribute to
@@ -205,6 +207,7 @@ def display_contributions(username):#displays projects that a user can contribut
     retstr = ''
     for project in allowed_projects[1]:
         retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+    print retstr
     return retstr
 
 # -- run module -- #
