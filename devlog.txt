@@ -147,3 +147,15 @@ jamesY -- 2017-05-31 12:21
 - Started and finished password change
 - Started project listing on home page
 ==============================
+
+==============================
+nickN -- 2017-06-01 12:15
+
+- Worked on project listing for users
+==============================
+
+==============================
+nickN -- 2017-05-31 12:15
+
+- Began thinking about extrude function
+==============================

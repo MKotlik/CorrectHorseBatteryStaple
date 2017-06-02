@@ -43,7 +43,7 @@ def root():
 def home():
     '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
-        return render_template('home_user.html',owned_projects=display_projects(session['username']))
+        return render_template('home_user.html',owned_projects=display_projects(session['username']),permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
 
@@ -193,13 +193,19 @@ def is_password_valid(password):
     return len(password) >= 8
 
 # ===== DISPLAY HELPERS ===== #
-def display_projects(username):
+def display_projects(username):#displays a user's own projects
     own_projects = db_users.get_owned_projects(username)
     retstr = ''
     for project in own_projects[1]:
         retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
     return retstr
 
+def display_contributions(username):#displays projects that a user can contribute to
+    allowed_projects = db_users.get_permitted_projects(username)
+    retstr = ''
+    for project in allowed_projects[1]:
+        retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+    return retstr
 
 # -- run module -- #
 
