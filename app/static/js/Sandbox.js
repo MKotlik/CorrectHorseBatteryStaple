@@ -139,18 +139,18 @@ Sandbox.prototype.initListeners = function () {
         }
     });
 
-    this.socket.on('partial-pull', this.partialPull);
-    this.socket.on('complete-pull', this.completePull);
+    this.socket.on('partial_pull', this.partialPull);
+    this.socket.on('complete_pull', this.completePull);
 };
 
 Sandbox.prototype.partialPush = function () {
-    this.socket.emit('partial-push', this.changes);
+    this.socket.emit('partial_push', this.changes);
     this.changes.added = [];
     this.changes.removed = [];
 };
 
 Sandbox.prototype.completePush = function () [
-    this.socket.emit('full-push', this.exportGrains());
+    this.socket.emit('complete_push', this.exportGrains());
 };
 
 Sandbox.prototype.partialPull = function (data) {
