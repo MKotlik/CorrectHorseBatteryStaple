@@ -43,9 +43,9 @@ def root():
 @app.route("/home/")
 def home():
     '''Displays the homepage, diff versions based on login status'''
-    proj_id = db_projects.add_project('project_test',session['username'],'test project')['projID']
-    db_users.add_owned_proj(name, proj_id)
     if is_logged_in():
+        proj_id = db_projects.add_project('project_test',session['username'],'test project')['projID']
+        db_users.add_owned_proj(name, proj_id)
         return render_template('home_user.html',owned_projects=display_projects(session['username']),permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
