@@ -11,22 +11,17 @@ function Sandbox(socket, renderer, camera, controls, scene, raycaster) {
     
     this.raycaster = raycaster;
 
-    this.lastMouse = null;
-
     this.task = null;
     this.tool = null;
     this.tools = {};
     
     this.active = false;
-    this.lastActionGrain = null;
-    this.lastActionPos = null;
     this.lastMouse = null;
     
     this.grains = [];
+    this.changes = {};
     this.light = null;
 }
-
-Sandbox.ACTION_COOLDOWN = 100;
 
 Sandbox.create = function (socket, container) {
     var renderer = new THREE.WebGLRenderer();
@@ -64,11 +59,15 @@ Sandbox.create = function (socket, container) {
     
     var sandbox = new Sandbox(socket, renderer, camera, controls, scene, raycaster);
 
-    sandbox.addListeners();
+    sandbox.initListeners();
+    sandbox.initTools();
+    sandbox.initWorld();
+    sandbox.initSocket();
+
     return sandbox;
 };
 
-Sandbox.prototype.addListeners = function () {
+Sandbox.prototype.initListeners = function () {
     this.controls.addEventListener('change', (e) => {
         this.render();
     });
@@ -87,7 +86,6 @@ Sandbox.prototype.addListeners = function () {
     element.addEventListener('mouseup', (e) => {
         if (e.which == 1) {
             this.active = false;
-            this.lastActionTime = null;
             this.run();
         }
     });
@@ -96,23 +94,18 @@ Sandbox.prototype.addListeners = function () {
         if (this.active) {
             var now = (new Date()).getTime();
             
-            if (!this.lastActionTime
-                || now - this.lastActionTime > Sandbox.ACTION_COOLDOWN) {
-                var startX = this.lastMouse.x >= 0 ? this.lastMouse.x : e.offsetX;
-                var startY = this.lastMouse.y >= 0 ? this.lastMouse.y : e.offsetY;
-                
-                var points = interpolate(startX, startY,
-                                         e.offsetX, e.offsetY);
+            var startX = this.lastMouse.x >= 0 ? this.lastMouse.x : e.offsetX;
+            var startY = this.lastMouse.y >= 0 ? this.lastMouse.y : e.offsetY;
+            
+            var points = interpolate(startX, startY,
+                                     e.offsetX, e.offsetY);
 
-                for (var point of points) {
-                    this.getCurrentTool().use(point);
-                }
-
-                this.run();
-
-                this.lastActionTime = now;
-                this.lastMouse.set(e.offsetX, e.offsetY);
+            for (var point of points) {
+                this.getCurrentTool().use(point);
             }
+
+            this.run();
+            this.lastMouse.set(e.offsetX, e.offsetY);
         }
     });
 
@@ -137,24 +130,51 @@ Sandbox.prototype.addListeners = function () {
             this.tool = 'carve';
             console.log(this.tool);
             break;
+        case 83: //s
+            if (e.ctrlKey) {
+                this.partialPush();
+            }
+
+            break;
         }
     });
+
+    this.socket.on('partial-pull', this.partialPull);
+    this.socket.on('complete-pull', this.completePull);
 };
 
-Sandbox.prototype.initialize = function (task) {
-    if (this.substrate) {
-        this.scene.remove(this.substrate);
+Sandbox.prototype.partialPush = function () {
+    this.socket.emit('partial-push', this.changes);
+    this.changes.added = [];
+    this.changes.removed = [];
+};
+
+Sandbox.prototype.completePush = function () [
+    this.socket.emit('full-push', this.exportGrains());
+};
+
+Sandbox.prototype.partialPull = function (data) {
+    for (var index of data.added) {
+        var grainCoords = toGrainCoords(index);
+        this.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
     }
-    
-    this.substrate = new THREE.Object3D();
-    this.scene.add(this.substrate);
-    
-    this.controls.reset();
 
-    this.lastMouse = new THREE.Vector2(-1, -1);
-    this.lastActionGrain = new THREE.Vector3(-1, -1, -1);
-    this.grains = new Array(Math.pow(2 * Constants.MAX_GRAIN_COORD + 1, 3));
+    for (var index of data.removed) {
+        var grainCoords = toGrainCoords(index);
+        this.removeGrain(grainCoords.x, grainCoords.y, grainCoords.z);
+    }    
+};
 
+Sandbox.prototype.completePull = function (data) {
+    this.grains = [];
+    
+    for (var index of data.grainIndices) {
+        var grainCoords = toGrainCoords(index);
+        this.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
+    }
+};
+
+Sandbox.prototype.initTools = function () {
     var carve = Tool.create('carve', {
         radius: 1
     });
@@ -260,6 +280,24 @@ Sandbox.prototype.initialize = function (task) {
     };
         
     this.tool = 'build';
+};    
+
+Sandbox.prototype.initWorld = function () {
+    if (this.substrate) {
+        this.scene.remove(this.substrate);
+    }
+    
+    this.substrate = new THREE.Object3D();
+    this.scene.add(this.substrate);
+    
+    this.lastMouse = new THREE.Vector2(-1, -1);
+    this.grains = new Array(Math.pow(2 * Constants.MAX_GRAIN_COORD + 1, 3));
+    this.changes.added = [];
+    this.changes.removed = [];
+};
+
+Sandbox.prototype.reset = function (task) {
+    this.controls.reset();
 
     if (task) {
         this.task = task;
@@ -293,7 +331,7 @@ Sandbox.prototype.createGrain = function (gx, gy, gz) {
     mesh.position.x = toWorldCoord(gx);
     mesh.position.y = toWorldCoord(gy);
     mesh.position.z = toWorldCoord(gz);
-
+p
     return mesh;
 };
 
@@ -306,6 +344,7 @@ Sandbox.prototype.addGrain = function (gx, gy, gz) {
     if (!this.grains[index]) {
         var grain = this.createGrain(gx, gy, gz);
         this.grains[index] = grain;
+        this.changes.added.push(index);
     }
 };
 
@@ -314,8 +353,32 @@ Sandbox.prototype.removeGrain = function (gx, gy, gz) {
     gy = Math.round(gy);
     gz = Math.round(gz);
     var index = toGrainIndex(gx, gy, gz);
-    this.grains[index] = undefined;
+
+    if (this.grains[index]) {
+        this.grains[index] = undefined;
+        this.changes.removed.push(index);
+    }
 };    
+
+Sandbox.prototype.exportGrains = function () {
+    var list = [];
+    
+    for (var grain of this.grains) {
+        if (grain) {
+            var grainVector = toGrainVector(grain.position);
+            var index = toGrainIndex(grainVector.x, grainVector.y, grainVector.z);
+            list.push(index);
+        }
+    }
+
+    return list;
+};
+
+Sandbox.prototype.importGrains = function (grainIndices) {
+    for (var index of grainIndices) {
+        this.addGrain(index);
+    }
+};
 
 Sandbox.prototype.isBoundaryGrain = function (grain) {
     var neighbors = this.grainNeighbors(grain);
@@ -420,7 +483,7 @@ Sandbox.prototype.update = function () {
     }
 };
 
-Sandbox.prototype.render = function () {    
+Sandbox.prototype.render = function () {
     this.renderer.render(this.scene, this.camera);
 };
 

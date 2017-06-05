@@ -67,6 +67,16 @@ function toGrainIndex(gx, gy, gz) {
     return gx * grainRange * grainRange + gy * grainRange + gz;
 }
 
+function toGrainCoords(grainIndex) {
+    var grainRange = 2 * Constants.MAX_GRAIN_COORD;
+    var gz = grainIndex % grainRange;
+    grainIndex /= grainRange;
+    var gy = grainIndex % grainRange;
+    grainIndex /= grainRange;
+    var gz = grainIndex % grainRange;
+    return new THREE.Vector3(gx, gy, gz);
+}
+
 function toGrainLength(worldLength) {
     return Math.round(worldLength * Constants.GRAINS_PER_UNIT);
 }
