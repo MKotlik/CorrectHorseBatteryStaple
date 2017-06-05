@@ -159,7 +159,7 @@ def get_owned_projects(username):
                                     'owner': proj["owner"],
                                     'timeCreated': proj['timeCreated'],
                                     'timeLastSaved': proj['timeLastSaved']})
-        return (True, owned_projs)
+    return (True, owned_projs)
 
 
 def get_permitted_projects(username):
