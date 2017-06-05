@@ -44,7 +44,7 @@ def root():
 def home():
     '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
-        proj_id = db_projects.add_project('project_test',session['username'],'test project')['projID']
+        proj_id = db_projects.add_project('project_test',session['username'],'test project')[1]['projID']
         db_users.add_owned_proj(name, proj_id)
         return render_template('home_user.html',owned_projects=display_projects(session['username']),permitted_projects=display_contributions(session['username']))
     else:
@@ -159,12 +159,7 @@ def ajaxchangepassword():
 # ===== SOCKETIO ENDPOINTS ===== #
 
 @socketio.on('user_connect')
-def handle_connection(socket):
-    pass
-
-
-@socketio.on('proj_request')
-def handle_proj_request(proj_request):
+def handle_connection(username, projID):
     pass
 
 
