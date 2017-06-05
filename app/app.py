@@ -44,9 +44,10 @@ def root():
 def home():
     '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
-        proj_id = db_projects.add_project('project_test',session['username'],'test project')[1]['projID']
-        db_users.add_owned_proj(name, proj_id)
-        return render_template('home_user.html',owned_projects=display_projects(session['username']),permitted_projects=display_contributions(session['username']))
+        proj_id = db_projects.add_project(
+            'project_test', session['username'], 'test project')[1]['projID']
+        db_users.add_owned_proj(session['username'], proj_id)
+        return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
 
@@ -144,6 +145,7 @@ def ajaxsignup():
         # Return "ok" to perform client-side redirect
         return "ok"
 
+
 @app.route("/ajaxchangepassword/", methods=["POST"])
 def ajaxchangepassword():
     username = session["username"]
@@ -158,6 +160,7 @@ def ajaxchangepassword():
 
 # ===== SOCKETIO ENDPOINTS ===== #
 
+
 @socketio.on('user_connect')
 def handle_connection(username, projID):
     pass
@@ -169,12 +172,32 @@ def handle_disconnect(data):
 
 
 @socketio.on('meta_change')
-def handle_meta_change(change_data):
+def handle_meta_change(data):
     pass
 
 
-@socketio.on('save_project')
-def handle_save(save_data):
+@socketio.on('save')
+def handle_save(data):
+    pass
+
+
+@socketio.on('update')
+def handle_save(data):
+    pass
+
+
+@socketio.on('perm_request')
+def handle_save(data):
+    pass
+
+
+@socketio.on('accept_request')
+def handle_save(data):
+    pass
+
+
+@socketio.on('notif_read')
+def handle_save(data):
     pass
 
 
@@ -193,20 +216,28 @@ def is_password_valid(password, confirmPassword):
     return (len(password) >= 8) and (password == confirmPassword)
 
 # ===== DISPLAY HELPERS ===== #
-def display_projects(username):#displays a user's own projects
+
+
+def display_projects(username):  # displays a user's own projects
     own_projects = db_users.get_owned_projects(username)
     print own_projects
     retstr = ''
     for project in own_projects[1]:
-        retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+        retstr += '<a href="/project/' + \
+            str(project['projID']) + '" class="list-group-item">' + \
+            project['name'] + '</a>\n'
     print retstr
     return retstr
 
-def display_contributions(username):#displays projects that a user can contribute to
+
+# displays projects that a user can contribute to
+def display_contributions(username):
     allowed_projects = db_users.get_permitted_projects(username)
     retstr = ''
     for project in allowed_projects[1]:
-        retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+        retstr += '<a href="/project/' + \
+            str(project['projID']) + '" class="list-group-item">' + \
+            project['name'] + '</a>\n'
     print retstr
     return retstr
 
