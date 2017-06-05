@@ -1,3 +1,4 @@
+
 # sculpt.io - Team CorrectHorseBatteryStaple
 # SoftDev, Spring 2017
 # app.py - main server module
@@ -128,10 +129,11 @@ def ajaxsignup():
     '''
     username = request.form["username"]
     password = request.form["password"]
+    confirmPassword = request.form["confirmPassword"]
     # Check if password meets reqs (in addition to client-side check)
     if db_users.does_user_exist(username):
         return "taken"
-    elif not is_password_valid(password):
+    elif not is_password_valid(password, confirmPassword):
         return "badpass"
     else:
         db_users.add_user(username, password)
@@ -144,8 +146,9 @@ def ajaxsignup():
 def ajaxchangepassword():
     username = session["username"]
     newPassword = request.form["newPassword"]
+    confirmNewPassword = request.form["confirmNewPassword"]
 
-    if not is_password_valid(newPassword):
+    if not is_password_valid(newPassword, confirmNewPassword):
         return "badpass"
     else:
         db_users.update_password(username, newPassword)
@@ -188,9 +191,9 @@ def get_username():
     return session["username"]
 
 
-def is_password_valid(password):
+def is_password_valid(password, confirmPassword):
     # Currently password length is only req, but can expand
-    return len(password) >= 8
+    return (len(password) >= 8) and (password == confirmPassword)
 
 
 # -- run module -- #

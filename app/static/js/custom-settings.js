@@ -18,7 +18,7 @@ $(document).ready(function() {
         } else {
           //Implies "badpass" response status
           $("#change-status").fadeIn(1000, function() {
-            $("#change-status").html('<span class="text-danger">Password is too short.</span>');
+            $("#change-status").html('<span class="text-danger">Password is too short or is not the same.</span>');
           });
         }
       }

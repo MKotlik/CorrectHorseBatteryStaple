@@ -22,7 +22,7 @@ $(document).ready(function() {
         } else {
           //Implies "badpass" response status
           $("#registerStatus").fadeIn(1000, function() {
-            $("#registerStatus").html('<span class="text-danger">Password is too short.</span>');
+            $("#registerStatus").html('<span class="text-danger">Password is too short or not the same</span>');
           });
         }
       }
