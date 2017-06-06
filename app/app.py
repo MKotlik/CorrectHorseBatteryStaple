@@ -70,6 +70,13 @@ def logout():
     return redirect(url_for('home'))
 
 
+@app.route("/create/")
+def create():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    return render_template('create.html')
+
+
 @app.route("/project/<projID>")
 def project(projID):
     '''Displays editor for project specified by projID
