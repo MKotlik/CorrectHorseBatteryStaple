@@ -95,16 +95,28 @@ def profile():
     return render_template('settings.html')
 
 
-@app.route("/search/<query>/")
-def search(query):
+@app.route("/search/")
+def search():
     '''Displays search results for given query'''
     # NOTE: should we have a search page w/o query as well? (/search/)
+    query = request.args.get("query")
     if not is_logged_in():
         return redirect(url_for('login'))
     if query == '':
         return redirect(url_for('home'))
     else:
-        return render_template('search.html', query=query)
+        results = [project for project in db_projects.get_projects() if
+                   (query in project['name'].split()
+                    or query in project['description'].split()
+                    or query in project['owner'].split()
+                    or any(query in personlist.split() for personlist in project['contributors']))]
+        resultstring = ''
+        for project in results:
+            resultstring += '<a href="/project/' + \
+                str(project['projID']) + '" class="list-group-item">' + \
+                project['name'] + (20 * '&nbsp') + 'Owner: ' + \
+                project['owner'] + '</a>\n'
+        return render_template('search.html', query=query, results=resultstring)
 
 
 @app.route("/test/")
@@ -194,7 +206,7 @@ def ajaxcreate():
     visible = (request.form['visible'] == 'True')
 
     projID = db_projects.add_project(name, owner, description, access_rights,
-                            visible, permissions)[1]['projID']
+                                     visible, permissions)[1]['projID']
     return 'ok: ' + str(projID)
 
 
@@ -339,7 +351,8 @@ def display_contributions(username):
     for project in allowed_projects[1]:
         retstr += '<a href="/project/' + \
             str(project['projID']) + '" class="list-group-item">' + \
-            project['name'] + '</a>\n'
+            'Name: ' + project['name'] + (20 * '&nbsp') + \
+            'Owner: ' + project['owner'] + '</a>\n'
     print retstr
     return retstr
 
