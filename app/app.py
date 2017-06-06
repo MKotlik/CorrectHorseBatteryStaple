@@ -95,22 +95,33 @@ def profile():
     return render_template('settings.html')
 
 
-@app.route("/search/<query>/")
-def search(query):
+@app.route("/search/")
+def search():
     '''Displays search results for given query'''
     # NOTE: should we have a search page w/o query as well? (/search/)
+    query = request.args.get("query")
     if not is_logged_in():
         return redirect(url_for('login'))
     if query == '':
         return redirect(url_for('home'))
     else:
-        return render_template('search.html',query=query)
+        results = [project for project in db_projects.get_projects() if
+                   (query in project['name'].split()
+                    or query in project['description'].split()
+                    or query in project['owner'].split()
+                    or any(query in personlist.split() for personlist in project['contributors']))]
+        resultstring = ''
+        for project in results:
+            resultstring += '<a href="/project/' + \
+                str(project['projID']) + '" class="list-group-item">' + \
+                project['name'] + (20 * '&nbsp') + 'Owner: ' + \
+                project['owner'] + '</a>\n'
+        return render_template('search.html', query=query, results=resultstring)
 
 
 @app.route("/test/")
 def test():
     return render_template('editor.html')
-
 
 
 # ===== AJAX ROUTES ===== #
@@ -168,6 +179,37 @@ def ajaxchangepassword():
         return "ok"
 
 
+@app.route("/ajaxcreate/", methods=["POST"])
+def ajaxcreate():
+    '''Endpoint for ajax create project POST request
+    Takes project name, access_rights, visibility, and optionally description
+    and collaborators and creates the correspondng project.
+    Returns: "ok: <projID>" if project successfully created
+             "missing user: <username>" for a nonexistent collaborator
+    '''
+    name = request.form['name']
+    owner = session['username']
+
+    collab_string = request.form['collaborators']  # Default to edit rights
+    # Strip by commas and remove whitespace
+    collab_list = [user.strip() for user in collab_list.split(',')]
+    # Check that all collaborators exist
+    for user in collab_list:
+        if not db_users.does_user_exist(user):
+            return 'missing user: ' + user
+    # Create dictionary with edit as default permission
+    permissions = {user: 'edit' for user in collab_list}
+
+    description = request.form['description']
+    # Using this to convert from string to boolean
+    access_rights = (request.form['access_rights'] == 'True')
+    visible = (request.form['visible'] == 'True')
+
+    projID = db_projects.add_project(name, owner, description, access_rights,
+                                     visible, permissions)[1]['projID']
+    return 'ok: ' + str(projID)
+
+
 # ===== SOCKETIO ENDPOINTS ===== #
 
 @socketio.on('user_connect')
@@ -213,6 +255,7 @@ def handle_disconnect(data):
         room = str(users_rooms[username])
         if cleanup_on_disconnect(username):
             socketio.emit('user_leave', {'username': username}, room=room)
+
 
 @socketio.on('meta_change')
 def handle_meta_change(data):
@@ -308,9 +351,11 @@ def display_contributions(username):
     for project in allowed_projects[1]:
         retstr += '<a href="/project/' + \
             str(project['projID']) + '" class="list-group-item">' + \
-            project['name'] + '</a>\n'
+            'Name: ' + project['name'] + (20 * '&nbsp') + \
+            'Owner: ' + project['owner'] + '</a>\n'
     print retstr
     return retstr
+
 
 # -- run module -- #
 
