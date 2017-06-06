@@ -1,14 +1,14 @@
 var socket = io();
-var container = $('#container')[0];
+var container = $('.sandbox');
 var sandbox = Sandbox.create(socket, container);
 
-container.addEventListener('contextmenu', function (e) {
+container.on('contextmenu', function (e) {
     e.preventDefault();
-}, true);
+});
 
-container.addEventListener('wheel', function (e) {
+container.on('wheel', function (e) {
     e.preventDefault();
-}, true);
+});
 
 sandbox.reset(function () {
     //this.addBox(0, 0, 0, 10, 0.1, 0.1, 'red');

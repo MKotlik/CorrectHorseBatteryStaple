@@ -1,24 +1,27 @@
-function Sandbox(socket, renderer, camera, controls, scene, raycaster) {
+function Sandbox(socket, container, renderer, camera, controls,
+                 scene, raycaster, world, substrate) {
     this.socket = socket;
-
+    this.container = container;
+    
     this.renderer = renderer;
     
     this.camera = camera;
     this.controls = controls;
 
     this.scene = scene;
-    this.substrate = null;
     
     this.raycaster = raycaster;
 
+    this.world = world;
+
+    this.substrate = substrate;
     this.task = null;
     this.tool = null;
     this.tools = {};
     
     this.active = false;
     this.lastMouse = null;
-    
-    this.grains = [];
+
     this.changes = {};
     this.light = null;
 }
@@ -42,27 +45,20 @@ Sandbox.create = function (socket, container) {
 
     var scene = new THREE.Scene();
 
-    var light = new THREE.PointLight('#FFFFFF', 1, 20, 2);
-    light.position.copy(camera.position);
-    camera.add(light);
-    scene.add(camera);
-    
-    light = new THREE.AmbientLight('#FFFFFF', 0.5);
-    scene.add(light);
-
-    light = new THREE.DirectionalLight('#FFFFFF', 0.2);
-    scene.add(light);
-
     var raycaster = new THREE.Raycaster();
 
-    container.appendChild(rendererDOM);
+    container.append($(rendererDOM).attr('class', 'renderer'));
+
+    var world = World.create();
+    var substrate = new THREE.Object3D();
     
-    var sandbox = new Sandbox(socket, renderer, camera, controls, scene, raycaster);
+    var sandbox = new Sandbox(socket, container, renderer, camera, controls,
+                              scene, raycaster, world, substrate);
 
     sandbox.initListeners();
     sandbox.initTools();
-    sandbox.initWorld();
-    sandbox.initSocket();
+    sandbox.initProject();
+    sandbox.initUI();
 
     return sandbox;
 };
@@ -72,9 +68,13 @@ Sandbox.prototype.initListeners = function () {
         this.render();
     });
 
-    var element = this.renderer.domElement;
+    var element = $(this.renderer.domElement);
+
+    element.on('contextmenu', (e) => {
+        e.preventDefault();
+    });
     
-    element.addEventListener('mousedown', (e) => {
+    element.on('mousedown', (e) => {
         if (e.which == 1) {
             this.active = true;
             this.lastMouse.set(e.offsetX, e.offsetY);
@@ -83,14 +83,14 @@ Sandbox.prototype.initListeners = function () {
         }
     });
 
-    element.addEventListener('mouseup', (e) => {
+    element.on('mouseup', (e) => {
         if (e.which == 1) {
             this.active = false;
             this.run();
         }
     });
     
-    element.addEventListener('mousemove', (e) => {
+    element.on('mousemove', (e) => {
         if (this.active) {
             var now = (new Date()).getTime();
             
@@ -109,32 +109,31 @@ Sandbox.prototype.initListeners = function () {
         }
     });
 
-    element.addEventListener('wheel', (e) => {
+    element.on('wheel', (e) => {
         if (!e.ctrlKey) {
-            var value = e.deltaY;
+            var value = e.originalEvent.deltaY;
             this.getCurrentTool().change(-sign(value));
             this.run();
+            //e.preventDefault();
         }
     });
     
     window.addEventListener('keydown', (e) => {
         switch (e.keyCode) {
         case 32: //space
-            this.initialize();
+            this.reset();
             break;
-        case 66: //b
-            this.tool = 'build';
-            console.log(this.tool);
-            break;
-        case 67: //c
-            this.tool = 'carve';
-            console.log(this.tool);
-            break;
+        //case 66: //b
+            //this.tool = 'pull';
+            //console.log(this.tool);
+            //break;
+        //case 67: //c
+            //this.tool = 'push';
+            //console.log(this.tool);
+            //break;
         case 83: //s
-            if (e.ctrlKey) {
-                this.partialPush();
-            }
-
+            this.partialPush();
+            console.log('partial push');
             break;
         }
     });
@@ -145,56 +144,54 @@ Sandbox.prototype.initListeners = function () {
 
 Sandbox.prototype.partialPush = function () {
     this.socket.emit('partial_push', this.changes);
-    this.changes.added = [];
-    this.changes.removed = [];
+    this.world.resetChanges();
 };
 
-Sandbox.prototype.completePush = function () [
-    this.socket.emit('complete_push', this.exportGrains());
+Sandbox.prototype.completePush = function () {
+    this.socket.emit('complete_push', this.world.exportGrains());
 };
 
 Sandbox.prototype.partialPull = function (data) {
     for (var index of data.added) {
         var grainCoords = toGrainCoords(index);
-        this.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
+        this.world.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
     }
 
     for (var index of data.removed) {
         var grainCoords = toGrainCoords(index);
-        this.removeGrain(grainCoords.x, grainCoords.y, grainCoords.z);
+        this.world.removeGrain(grainCoords.x, grainCoords.y, grainCoords.z);
     }    
 };
 
 Sandbox.prototype.completePull = function (data) {
-    this.grains = [];
+    this.world.resetGrains();
     
     for (var index of data.grainIndices) {
         var grainCoords = toGrainCoords(index);
-        this.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
+        this.world.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
     }
 };
 
 Sandbox.prototype.initTools = function () {
-    var carve = Tool.create('carve', {
+    var push = Tool.create('push', {
         radius: 1
     });
 
-    var build = Tool.create('build', {
+    var pull = Tool.create('pull', {
         radius: 1
     });
 
-    carve.use = (point) => {
+    push.use = (point) => {
         var first = this.raycast(point);
 
         if (first) {
             var gx = toGrainCoord(first.object.position.x);
             var gy = toGrainCoord(first.object.position.y);
             var gz = toGrainCoord(first.object.position.z);
-            var gr = carve.options.radius;
+            var gr = push.options.radius;
             var gr2 = Math.round(gr / 2);
-            var i, j, k;
 
-            var sample = this.grainsInRadius(gx, gy, gz, gr2);
+            var sample = this.world.grainsInRadius(gx, gy, gz, gr2);
 
             if (sample.length > 0) {
                 var center = sumVectorList(sample.map(grain => grain.position))
@@ -208,39 +205,41 @@ Sandbox.prototype.initTools = function () {
                     normal = first.object.position.clone().sub(center).normalize();
                 }
 
-                var sphere = this.grainsInRadius(gx, gy, gz, gr);
+                var sphere = this.world.grainsInRadius(gx, gy, gz, gr);
                 var toRemove = [];
                 
                 for (var base of sphere) {
-                    if (this.isOutwardInDirection(base, normal)) {
+                    if (this.world.isOutwardInDirection(base, normal)) {
                         toRemove.push(base);
                     }
                 }
 
                 for (var grain of toRemove) {
                     var gp = toGrainVector(grain.position);
-                    this.removeGrain(gp.x, gp.y, gp.z);
+                    this.world.removeGrain(gp.x, gp.y, gp.z);
                 }
             }
         }
     };
 
-    carve.change = (value) => {
-        carve.options.radius = clamp(carve.options.radius + value, 0, 20);
-        console.log(carve.options.radius);
+    push.change = (value) => {
+        console.log(value);
+        push.options.radius = clamp(push.options.radius + value, 0, 20);
+        push.element.find('.tool-slider').val(push.options.radius);
+        push.element.find('.tool-radius').text(push.options.radius);
     };
 
-    build.use = (point) => {
+    pull.use = (point) => {
         var first = this.raycast(point);
 
         if (first) {
             var gx = toGrainCoord(first.object.position.x);
             var gy = toGrainCoord(first.object.position.y);
             var gz = toGrainCoord(first.object.position.z);
-            var gr = build.options.radius;
+            var gr = pull.options.radius;
             var gr2 = Math.round(gr / 2);
 
-            var sample = this.grainsInRadius(gx, gy, gz, gr2);
+            var sample = this.world.grainsInRadius(gx, gy, gz, gr2);
 
             if (sample.length > 0) {
                 var center = sumVectorList(sample.map(grain => grain.position))
@@ -254,47 +253,128 @@ Sandbox.prototype.initTools = function () {
                     normal = first.object.position.clone().sub(center).normalize();
                 }
 
-                var sphere = this.grainsInRadius(gx, gy, gz, gr);
+                var sphere = this.world.grainsInRadius(gx, gy, gz, gr);
                 
                 var startGrain, endGrain, currentGrain;
                 
                 for (var base of sphere) {
-                    if (this.isOutwardInDirection(base, normal)) {
+                    if (this.world.isOutwardInDirection(base, normal)) {
                         var start = toGrainVector(base.position);
                         var end = start.clone().add(normal);
-                        this.addGrain(end.x, end.y, end.z)
+                        this.world.addGrain(end.x, end.y, end.z)
                     }
                 }
             }
         }
     };
 
-    build.change = (value) => {
-        build.options.radius = clamp(build.options.radius + value, 0, 20);
-        console.log(build.options.radius);
+    pull.change = (value) => {
+        pull.options.radius = clamp(pull.options.radius + value, 0, 20);
+        pull.element.find('.tool-slider').val(pull.options.radius);
+        pull.element.find('.tool-radius').text(pull.options.radius);
     };
         
     this.tools = {
-        'carve': carve,
-        'build': build
+        'push': push,
+        'pull': pull
     };
         
-    this.tool = 'build';
+    this.tool = 'pull';
 };    
 
-Sandbox.prototype.initWorld = function () {
-    if (this.substrate) {
-        this.scene.remove(this.substrate);
-    }
+Sandbox.prototype.initProject = function () {
+    this.world.init();
+
+    var light = new THREE.PointLight('#FFFFFF', 1, 20, 2);
+    light.position.copy(this.camera.position);
+    this.camera.add(light);
+    this.scene.add(this.camera);
     
-    this.substrate = new THREE.Object3D();
+    light = new THREE.AmbientLight('#FFFFFF', 0.5);
+    this.scene.add(light);
+
+    light = new THREE.DirectionalLight('#FFFFFF', 0.2);
+    this.scene.add(light);
+    
     this.scene.add(this.substrate);
-    
     this.lastMouse = new THREE.Vector2(-1, -1);
-    this.grains = new Array(Math.pow(2 * Constants.MAX_GRAIN_COORD + 1, 3));
-    this.changes.added = [];
-    this.changes.removed = [];
 };
+
+Sandbox.prototype.initUI = function () {
+    var toolbox = $('<table>').attr('class', 'toolbox');
+    
+    for (var tool in this.tools) {
+        var row = $('<tr>');
+
+        row.on('click', ((tool) => {
+            return (e) => {
+                this.tool = tool;
+
+                for (var row of $('.tool-row')) {
+                    var row = $(row);
+
+                    if (this.tools[tool].element[0] == row[0]) {
+                        row.attr('class', 'tool-row tool-selected');
+                    } else {
+                        row.attr('class', 'tool-row tool-deselected');
+                    }
+                }
+            };
+        })(tool));
+        
+        if (tool == this.tool) {
+            row.attr('class', 'tool-row tool-selected');
+        } else {
+            row.attr('class', 'tool-row tool-deselected');
+        }
+        
+        var icon = $('<img>').attr({
+            src: Constants.IMAGE_PATH + tool + '.png',
+            'class': 'tool-icon'
+        });
+
+        var slider = $('<input>').attr({
+            'class': 'tool-slider',
+            type: 'range',
+            min: 0,
+            max: 20,
+            step: 1,
+            value: this.tools[tool].options.radius
+        });
+
+        var label = $('<div>').text(this.tools[tool].options.radius)
+            .attr('class', 'tool-radius');
+
+        slider.on('change', ((tool, slider, label) => {
+            return (e) => {
+                this.tools[tool].options.radius = slider.val();
+                label.text(slider.val());
+            };
+        })(tool, slider, label));
+
+        //slider.hide();
+        
+        //icon.hover(((slider) => {
+            //return (e) => {
+                //console.log('in');
+                //slider.show();
+            //};
+        //})(slider), ((slider) => {
+            //return (e) => {
+                //console.log('out');
+                //slider.hide();
+            //};
+        //})(slider));
+        
+        row.append($('<td>').append(icon));
+        row.append($('<td>').append(slider));
+        row.append($('<td>').append(label));
+        this.tools[tool].element = row;
+        toolbox.append(row);
+    }
+
+    this.container.append(toolbox);
+}
 
 Sandbox.prototype.reset = function (task) {
     this.controls.reset();
@@ -323,103 +403,6 @@ Sandbox.prototype.raycast = function (point) {
 Sandbox.prototype.getCurrentTool = function () {
     return this.tools[this.tool];
 };
-    
-Sandbox.prototype.createGrain = function (gx, gy, gz) {
-    var mesh = new THREE.Mesh(Constants.GRAIN_GEOMETRY,
-                              Constants.GRAIN_MATERIAL);
-
-    mesh.position.x = toWorldCoord(gx);
-    mesh.position.y = toWorldCoord(gy);
-    mesh.position.z = toWorldCoord(gz);
-p
-    return mesh;
-};
-
-Sandbox.prototype.addGrain = function (gx, gy, gz) {
-    gx = Math.round(gx);
-    gy = Math.round(gy);
-    gz = Math.round(gz);
-    var index = toGrainIndex(gx, gy, gz);
-
-    if (!this.grains[index]) {
-        var grain = this.createGrain(gx, gy, gz);
-        this.grains[index] = grain;
-        this.changes.added.push(index);
-    }
-};
-
-Sandbox.prototype.removeGrain = function (gx, gy, gz) {
-    gx = Math.round(gx);
-    gy = Math.round(gy);
-    gz = Math.round(gz);
-    var index = toGrainIndex(gx, gy, gz);
-
-    if (this.grains[index]) {
-        this.grains[index] = undefined;
-        this.changes.removed.push(index);
-    }
-};    
-
-Sandbox.prototype.exportGrains = function () {
-    var list = [];
-    
-    for (var grain of this.grains) {
-        if (grain) {
-            var grainVector = toGrainVector(grain.position);
-            var index = toGrainIndex(grainVector.x, grainVector.y, grainVector.z);
-            list.push(index);
-        }
-    }
-
-    return list;
-};
-
-Sandbox.prototype.importGrains = function (grainIndices) {
-    for (var index of grainIndices) {
-        this.addGrain(index);
-    }
-};
-
-Sandbox.prototype.isBoundaryGrain = function (grain) {
-    var neighbors = this.grainNeighbors(grain);
-    return neighbors.length < 7;
-};
-
-Sandbox.prototype.getOutwardNormals = function (grain) {
-    var normals = [];
-    
-    if (this.isBoundaryGrain(grain)) {
-        for (var i = 0; i < grain.geometry.faces.length; i += 2) {
-            var normal = grain.geometry.faces[i].normal;
-            //console.log(toGrainVector(grain.position));
-            var grainVector = toGrainVector(grain.position).add(normal);
-            var index = toGrainIndex(grainVector.x,
-                                     grainVector.y,
-                                     grainVector.z);
-            
-            if (!this.grains[index]) {
-                //console.log(grainVector, normal);
-                normals.push(normal);
-            }
-        }
-    }
-
-    return normals;
-};    
-
-Sandbox.prototype.isOutwardInDirection = function (grain, vector) {
-    if (this.isBoundaryGrain(grain)) {
-        var normals = this.getOutwardNormals(grain);
-
-        for (var normal of normals) {
-            if (normal.angleTo(vector) < Math.PI / 2) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-};
 
 Sandbox.prototype.addBox = function (x, y, z, l, w, h, solid) {
     var gx = toGrainCoord(x);
@@ -439,45 +422,20 @@ Sandbox.prototype.addBox = function (x, y, z, l, w, h, solid) {
                     || i == gx || i == gx + gl - 1 
                     || j == gy || j == gy + gw - 1
                     || k == gz || k == gz + gh - 1) {
-                    this.addGrain(i, j, k);
+                    this.world.addGrain(i, j, k);
                 }
             }
         }
     }
 };
 
-Sandbox.prototype.grainsInRadius = function (gx, gy, gz, gr) {
-    var grains = [];
-    var coords = pointsInRadius(gx, gy, gz, gr);
-    gr = Math.round(gr);
-    var i, j, k;
-
-    for ([i, j, k] of coords) {
-        var grain = this.grains[toGrainIndex(i, j, k)];
-
-        if (grain) {
-            grains.push(grain);
-        }
-    }
-
-    return grains;
-};
-
-Sandbox.prototype.grainNeighbors = function (grain) {
-    var grainVector = toGrainVector(grain.position);
-    return this.grainsInRadius(grainVector.x,
-                               grainVector.y,
-                               grainVector.z,
-                               1);
-};
-    
 Sandbox.prototype.update = function () {
     while (this.substrate.children.length > 0) {
         this.substrate.remove(this.substrate.children[0]);
     }
 
-    for (var grain of this.grains) {
-        if (grain && this.isBoundaryGrain(grain)) {
+    for (var grain of this.world.grains) {
+        if (grain && this.world.isBoundaryGrain(grain)) {
             this.substrate.add(grain);
         }
     }

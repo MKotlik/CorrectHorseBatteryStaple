@@ -26,3 +26,5 @@ Constants.GRAIN_GEOMETRY = new THREE.BoxGeometry(Constants.GRAIN_SIZE,
 Constants.GRAIN_MATERIAL = new THREE.MeshLambertMaterial({
     color: Constants.DEFAULT_GRAIN_COLOR
 });
+
+Constants.IMAGE_PATH = '/static/img/';

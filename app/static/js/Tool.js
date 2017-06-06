@@ -1,10 +1,11 @@
-function Tool(name, options) {
+function Tool(name, options, element) {
     this.name = name;
     this.options = options;
+    this.element = element;
 }
 
-Tool.create = function (name, options) {
-    var tool = new Tool(name, options);
+Tool.create = function (name, options, element) {
+    var tool = new Tool(name, options, element);
     return tool;
 };
 
