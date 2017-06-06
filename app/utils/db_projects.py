@@ -22,7 +22,7 @@ projects collection:
         or false if private - only by invitation)
     - permittedUsers (list users with edit permissions (view, edit),
         excluding owner)
-    - visibile (true if visible to public [default], false if hidden)
+    - visible (true if visible to public [default], false if hidden)
 - each project COULD also contain:
     - editHistory (dict or list of edits made between saves [differences
         between saves], so that changes could be rolled back. Like git.)
@@ -53,7 +53,8 @@ def get_project(projID):
     return result
 
 
-def add_project(name, owner, description=''):
+def add_project(name, owner, description='', access_rights=False,
+                visible=True, permitted_users={}):
     '''Creates a new project, adds to database and returns it.
     Args: name (str), owner (str), [optional] description (str)
     Returns: a tuple containing success status (bool) and the project (dict)
@@ -67,9 +68,9 @@ def add_project(name, owner, description=''):
     project_dict = {"projID": new_projID, "name": name, "owner": owner,
                     "description": description, "contributors": [owner],
                     "timeCreated": time_now, "timeLastSaved": time_now,
-                    "accessRights": False, "visibile": True,
-                    "permittedUsers": {}}
-    project_dict["sculpture"] = [[]]  # Blank 2d array for now
+                    "accessRights": access_rights, "visible": visible,
+                    "permittedUsers": permitted_users}
+    project_dict["sculpture"] = []  # Blank 2d array for now
     projects.insert_one(project_dict)
     return (True, project_dict)
 
@@ -136,7 +137,7 @@ def update_visibility(projID, visibility):
     client = MongoClient()
     projects = client["sculptio"].projects
     update_result = projects.update_one({'projID': projID},
-                                        {"$set": {"visibile": visibility}})
+                                        {"$set": {"visible": visibility}})
     client.close()
     return update_result.matched_count > 0
 
