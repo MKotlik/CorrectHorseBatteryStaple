@@ -78,7 +78,7 @@ def create():
     return render_template('create.html')
 
 
-@app.route("/project/<projID>")
+@app.route("/project/<projID>/")
 def project(projID):
     '''Displays editor for project specified by projID
     projID is generated when a new project is created'''
@@ -186,28 +186,30 @@ def ajaxcreate():
     Takes project name, access_rights, visibility, and optionally description
     and collaborators and creates the correspondng project.
     Returns: "ok: <projID>" if project successfully created
-             "missing user: <username>" for a nonexistent collaborator
+             "missing: <username>" for a nonexistent collaborator
     '''
     name = request.form['name']
+    # NOTE: check for project name collision?
+    # "taken" if users owns a project with the same name
     owner = session['username']
 
     collab_string = request.form['collaborators']  # Default to edit rights
     # Strip by commas and remove whitespace
-    collab_list = [user.strip() for user in collab_list.split(',')]
+    collab_list = [user.strip() for user in collab_string.split(',')]
     # Check that all collaborators exist
+    print collab_list
     for user in collab_list:
-        if not db_users.does_user_exist(user):
-            return 'missing user: ' + user
+        if user != '' and not db_users.does_user_exist(user):
+            return 'missing: ' + user
     # Create dictionary with edit as default permission
     permissions = {user: 'edit' for user in collab_list}
 
     description = request.form['description']
     # Using this to convert from string to boolean
-    access_rights = (request.form['access_rights'] == 'True')
-    visible = (request.form['visible'] == 'True')
+    access_rights = (request.form['accessRights'] == 'public')
+    # visible = (request.form['visible'] == 'True')
 
-    projID = db_projects.add_project(name, owner, description, access_rights,
-                                     visible, permissions)[1]['projID']
+    projID = db_projects.add_project(name, owner, description, access_rights,permissions)[1]['projID']
     return 'ok: ' + str(projID)
 
 
@@ -294,10 +296,10 @@ def handle_update(data):
     print "SOCKETIO: got a partial_push"
     projID = users_rooms[username]
     proj = rooms_projects[projID]
-    
+
     if 'sculpture' not in proj:
         proj['sculpture'] = set()
-        
+
     for grain in data['added']:
         proj['sculpture'].add(grain)
 
@@ -305,7 +307,7 @@ def handle_update(data):
         proj['sculpture'].remove(grain)
 
     print "SOCKETIO: updated sculpture in memory"
-            
+
     socketio.emit('partial_pull', data)
     print "SOCKETIO: passed a partial_push"
 

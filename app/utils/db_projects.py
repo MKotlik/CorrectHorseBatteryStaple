@@ -20,8 +20,8 @@ projects collection:
     - description (description of project)
     - accessRights (true if public - anyone can join as a contributor,
         or false if private - only by invitation)
-    - permittedUsers (list users with edit permissions (view, edit),
-        excluding owner)
+    - permittedUsers (dict of users with edit permissions (view or edit),
+        excluding owner, where username is key and permission is value)
     - visible (true if visible to public [default], false if hidden)
 - each project COULD also contain:
     - editHistory (dict or list of edits made between saves [differences
