@@ -212,7 +212,7 @@ def handle_meta_change(data):
     pass
 
 
-@socketio.on('save')
+@socketio.on('complete_push')
 def handle_save(grainsList):
     if 'username' not in session:
         return False
