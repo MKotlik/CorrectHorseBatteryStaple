@@ -10,7 +10,7 @@
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import db_general, db_users, db_projects
-from flask_socketio import SocketIO, emit, send
+from flask_socketio import SocketIO, emit, send, join_room, leave_room
 
 app = Flask(__name__)
 app.secret_key = "horses"
@@ -158,13 +158,35 @@ def ajaxchangepassword():
         db_users.update_password(username, newPassword)
         return "ok"
 
+
 # ===== SOCKETIO ENDPOINTS ===== #
 
-
 @socketio.on('user_connect')
-def handle_connection(username, projID):
-    pass
-
+def handle_connection(projID):
+    if 'username' not in session:
+        return False
+    # Continue if authenticated (assume that accessed thru project page)
+    # Check for user's permission to access project in the app route, not here
+    join_room(str(projID))
+    username = session['username']
+    if username in users_rooms:
+        print 'WARNING: user connected but already in users_rooms'
+        # Remove user from connected list for old project
+    users_rooms[username] = [projID]
+    if projID not in rooms_projects:  # Aka this is first user for this proj
+        # Technically should check operation status here (future feature?)
+        proj = db_projects.get_project(projID)[1]
+        proj['active_users'] = [username]
+        rooms_projects[projID] = proj
+    else:
+        # Add user to list of users currently active on this proj
+        rooms_projects[projID]['active_users'].append(username)
+        proj = rooms_projects[projID]
+    response = {'username': username, 'grainIndices': proj['sculpture']}
+    # Giving username and grains to user
+    socketio.emit('complete_pull', response)
+    # Notify all collaborators about the newly joined user
+    socketio.emit('user_join', username, room=str(projID))
 
 @socketio.on('user_disconnect')
 def handle_disconnect(data):
@@ -182,22 +204,22 @@ def handle_save(data):
 
 
 @socketio.on('update')
-def handle_save(data):
+def handle_update(data):
     pass
 
 
 @socketio.on('perm_request')
-def handle_save(data):
+def handle_perm_request(data):
     pass
 
 
 @socketio.on('accept_request')
-def handle_save(data):
+def handle_accept_request(data):
     pass
 
 
 @socketio.on('notif_read')
-def handle_save(data):
+def handle_notif_read(data):
     pass
 
 
