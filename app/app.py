@@ -44,11 +44,6 @@ def root():
 def home():
     '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
-        proj_id = db_projects.add_project(
-            'new2', session['username'], 'test project')[1]['projID']
-        db_users.add_owned_proj(session['username'], proj_id)
-        db_users.add_contributed_proj('loltest1',proj_id)
-        db_projects.add_contributor(proj_id,'loltest1')
         return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
