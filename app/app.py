@@ -10,7 +10,8 @@
 
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import db_general, db_users, db_projects
-from flask_socketio import SocketIO, emit, send
+from flask_socketio import SocketIO, emit, send, join_room, leave_room
+import datetime
 
 app = Flask(__name__)
 app.secret_key = "horses"
@@ -44,9 +45,7 @@ def root():
 def home():
     '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
-        proj_id = db_projects.add_project('project_test',session['username'],'test project')['projID']
-        db_users.add_owned_proj(name, proj_id)
-        return render_template('home_user.html',owned_projects=display_projects(session['username']),permitted_projects=display_contributions(session['username']))
+        return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
 
@@ -71,6 +70,13 @@ def logout():
     return redirect(url_for('home'))
 
 
+@app.route("/create/")
+def create():
+    if not is_logged_in():
+        return redirect(url_for('login'))
+    return render_template('create.html')
+
+
 @app.route("/project/<projID>")
 def project(projID):
     '''Displays editor for project specified by projID
@@ -89,13 +95,28 @@ def profile():
     return render_template('settings.html')
 
 
-@app.route("/search/<query>")
-def search(query):
+@app.route("/search/")
+def search():
     '''Displays search results for given query'''
     # NOTE: should we have a search page w/o query as well? (/search/)
+    query = request.args.get("query")
     if not is_logged_in():
         return redirect(url_for('login'))
-    return render_template('search.html')
+    if query == '':
+        return redirect(url_for('home'))
+    else:
+        results = [project for project in db_projects.get_projects() if
+                   (query in project['name'].split()
+                    or query in project['description'].split()
+                    or query in project['owner'].split()
+                    or any(query in personlist.split() for personlist in project['contributors']))]
+        resultstring = ''
+        for project in results:
+            resultstring += '<a href="/project/' + \
+                str(project['projID']) + '" class="list-group-item">' + \
+                project['name'] + (20 * '&nbsp') + 'Owner: ' + \
+                project['owner'] + '</a>\n'
+        return render_template('search.html', query=query, results=resultstring)
 
 
 @app.route("/test/")
@@ -144,6 +165,7 @@ def ajaxsignup():
         # Return "ok" to perform client-side redirect
         return "ok"
 
+
 @app.route("/ajaxchangepassword/", methods=["POST"])
 def ajaxchangepassword():
     username = session["username"]
@@ -156,31 +178,141 @@ def ajaxchangepassword():
         db_users.update_password(username, newPassword)
         return "ok"
 
+
+@app.route("/ajaxcreate/", methods=["POST"])
+def ajaxcreate():
+    '''Endpoint for ajax create project POST request
+    Takes project name, access_rights, visibility, and optionally description
+    and collaborators and creates the correspondng project.
+    Returns: "ok: <projID>" if project successfully created
+             "missing user: <username>" for a nonexistent collaborator
+    '''
+    name = request.form['name']
+    owner = session['username']
+
+    collab_string = request.form['collaborators']  # Default to edit rights
+    # Strip by commas and remove whitespace
+    collab_list = [user.strip() for user in collab_list.split(',')]
+    # Check that all collaborators exist
+    for user in collab_list:
+        if not db_users.does_user_exist(user):
+            return 'missing user: ' + user
+    # Create dictionary with edit as default permission
+    permissions = {user: 'edit' for user in collab_list}
+
+    description = request.form['description']
+    # Using this to convert from string to boolean
+    access_rights = (request.form['access_rights'] == 'True')
+    visible = (request.form['visible'] == 'True')
+
+    projID = db_projects.add_project(name, owner, description, access_rights,
+                                     visible, permissions)[1]['projID']
+    return 'ok: ' + str(projID)
+
+
 # ===== SOCKETIO ENDPOINTS ===== #
 
 @socketio.on('user_connect')
-def handle_connection(socket):
-    pass
-
-
-@socketio.on('proj_request')
-def handle_proj_request(proj_request):
-    pass
+def handle_connection(projID):
+    print "SCULPTIO: received user_connect event"
+    if 'username' not in session:
+        print "SCULPTIO: user rejected because not authenticated"
+        return False
+    # Continue if authenticated (assume that accessed thru project page)
+    # Check for user's permission to access project in the app route, not here
+    username = session['username']
+    if username in users_rooms:
+        print 'SCULPTIO: user connected but already in users_rooms'
+        if projID != users_rooms[username]:  # If prev project isnt this one
+            room = str(users_rooms[username])
+            if cleanup_on_disconnect(username):
+                socketio.emit('user_leave', {'username': username}, room=room)
+    join_room(str(projID))
+    users_rooms[username] = [projID]
+    if projID not in rooms_projects:  # Aka this is first user for this proj
+        # Technically should check operation status here (future feature?)
+        proj = db_projects.get_project(projID)[1]
+        proj['active_users'] = [username]
+        rooms_projects[projID] = proj
+    else:
+        # Add user to list of users currently active on this proj
+        rooms_projects[projID]['active_users'].append(username)
+        proj = rooms_projects[projID]
+    response = {grainIndices: proj['sculpture']}
+    # Giving username and grains to user
+    socketio.emit('complete_pull', response)
+    # Notify all collaborators about the newly joined user
+    socketio.emit('user_join', username, room=str(projID))
+    print 'SCULPTIO: completed user connection'
 
 
 @socketio.on('user_disconnect')
 def handle_disconnect(data):
-    pass
+    if 'username' not in session:
+        return False
+    username = session['username']
+    if username in users_rooms:
+        room = str(users_rooms[username])
+        if cleanup_on_disconnect(username):
+            socketio.emit('user_leave', {'username': username}, room=room)
 
 
 @socketio.on('meta_change')
-def handle_meta_change(change_data):
+def handle_meta_change(data):
     pass
 
 
-@socketio.on('save_project')
-def handle_save(save_data):
+@socketio.on('complete_push')
+def handle_save(grainsList):
+    if 'username' not in session:
+        return False
+    username = session['username']
+    projID = users_rooms[username]
+    proj = rooms_projects[str(projID)]
+    proj['sculpture'] = grainsList
+    proj['timeLastSaved'] = datetime.datetime.utcnow()
+    db_projects.update_sculpture(projID, grainsList)
+    socketio.emit('saved', {'username': username}, room=str(projID))
+
+
+@socketio.on('partial_push')
+def handle_update(data):
+    if 'username' not in session:
+        return False
+    print "SOCKETIO: got a partial_push"
+    room = str(users_rooms[username])
+    socketio.emit('partial_pull', data, room=room)
+    print "SOCKETIO: passed a partial_push"
+
+
+@socketio.on('perm_request')
+def handle_perm_request(data):
     pass
+
+
+@socketio.on('accept_request')
+def handle_accept_request(data):
+    pass
+
+
+@socketio.on('notif_read')
+def handle_notif_read(data):
+    pass
+
+
+# ===== SOCKET HELPERS ===== #
+
+def cleanup_on_disconnect(username):
+    projID = users_rooms[username]
+    users_rooms.pop(username)
+    proj = rooms_projects[projID]
+    if len(proj['active_users']) >= 2:
+        proj['active_users'].remove(username)
+        return False
+    else:
+        db_projects.update_sculpture(projID, proj['sculpture'])
+        rooms_projects.pop(projID)
+        return True
 
 
 # ===== LOGIN HELPERS ===== #
@@ -198,22 +330,32 @@ def is_password_valid(password, confirmPassword):
     return (len(password) >= 8) and (password == confirmPassword)
 
 # ===== DISPLAY HELPERS ===== #
-def display_projects(username):#displays a user's own projects
+
+
+def display_projects(username):  # displays a user's own projects
     own_projects = db_users.get_owned_projects(username)
     print own_projects
     retstr = ''
     for project in own_projects[1]:
-        retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+        retstr += '<a href="/project/' + \
+            str(project['projID']) + '" class="list-group-item">' + \
+            project['name'] + '</a>\n'
     print retstr
     return retstr
 
-def display_contributions(username):#displays projects that a user can contribute to
+
+# displays projects that a user can contribute to
+def display_contributions(username):
     allowed_projects = db_users.get_permitted_projects(username)
     retstr = ''
     for project in allowed_projects[1]:
-        retstr += '<a href="/project/'+ str(project['projID'])+'" class="list-group-item">'+ project['name'] +'</a>\n'
+        retstr += '<a href="/project/' + \
+            str(project['projID']) + '" class="list-group-item">' + \
+            'Name: ' + project['name'] + (20 * '&nbsp') + \
+            'Owner: ' + project['owner'] + '</a>\n'
     print retstr
     return retstr
+
 
 # -- run module -- #
 

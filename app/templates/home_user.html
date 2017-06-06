@@ -14,15 +14,15 @@
 
 {% block body %}
 <div class="page-header">
-  <h1>Projects Contributed To</h1>
+  <h1>Owned Projects</h1>
   <ul class="list-group">
-    {{owned_projects}}
+    {{owned_projects | safe}}
   </ul>
 </div>
 <div class="page-header">
-  <h1>Owned Projects</h1>
+  <h1>Projects Contributed To</h1>
   <ul class="list-group">
-    {{permitted_projects}}
+    {{permitted_projects | safe}}
   </ul>
 </div>
 {% endblock body %} 

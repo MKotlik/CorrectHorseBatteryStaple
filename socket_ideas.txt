@@ -64,3 +64,17 @@ update:
   (add/remove block, add/remove shape, change color, etc)
   - Simply broadcasts the change to all room members
   - MUST BE AS FAST AS POSSIBLE
+
+perm_request:
+# event fired when a client requests to change their permission for current project
+  - issue request to project owner (databases)
+  - if project owner is connected, notify them of request
+
+accept_request:
+# event fired when a connected proj owner accepts a perm request
+  - accept request in database, update permissions in proj (in mem & db)
+  - send notification to requestee
+
+notif_read:
+# event fired when a client checks their notifications
+  - update user's notification status in database
