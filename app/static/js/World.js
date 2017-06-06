@@ -13,10 +13,6 @@ World.create = function () {
     return new World(grains, changes);
 };
 
-World.prototype.init = function () {
-    
-};
-
 World.prototype.resetChanges = function () {
     this.changes.added = [];
     this.changes.removed = [];

@@ -86,6 +86,7 @@ Sandbox.prototype.initListeners = function () {
     element.on('mouseup', (e) => {
         if (e.which == 1) {
             this.active = false;
+            this.partialPush();
             this.run();
         }
     });
@@ -131,27 +132,37 @@ Sandbox.prototype.initListeners = function () {
             //this.tool = 'push';
             //console.log(this.tool);
             //break;
+        case 82: //r
+            this.completePull();
+            break;
         case 83: //s
-            this.partialPush();
-            console.log('partial push');
+            this.completePush();
             break;
         }
     });
 
-    this.socket.on('partial_pull', this.partialPull);
-    this.socket.on('complete_pull', this.completePull);
+    this.socket.on('partial_pull', (data) => {
+        this.partialPull(data);
+    });
+    
+    this.socket.on('complete_pull', (data) => {
+        this.completePull(data);
+    });
 };
 
 Sandbox.prototype.partialPush = function () {
-    this.socket.emit('partial_push', this.changes);
+    console.log('partial push');
+    this.socket.emit('partial_push', this.world.changes);
     this.world.resetChanges();
 };
 
 Sandbox.prototype.completePush = function () {
+    console.log('complete push');
     this.socket.emit('complete_push', this.world.exportGrains());
 };
 
 Sandbox.prototype.partialPull = function (data) {
+    console.log('partial pull', data);
     for (var index of data.added) {
         var grainCoords = toGrainCoords(index);
         this.world.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
@@ -160,16 +171,26 @@ Sandbox.prototype.partialPull = function (data) {
     for (var index of data.removed) {
         var grainCoords = toGrainCoords(index);
         this.world.removeGrain(grainCoords.x, grainCoords.y, grainCoords.z);
-    }    
+    }
+
+    this.run();
 };
 
 Sandbox.prototype.completePull = function (data) {
+    console.log('complete pull');
+    
     this.world.resetGrains();
+
+    if (data.grainIndices.length == 0) {
+        this.addBox(-0.5, -0.5, -0.5, 1, 1, 1); 
+    }
     
     for (var index of data.grainIndices) {
         var grainCoords = toGrainCoords(index);
         this.world.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
     }
+
+    this.run();
 };
 
 Sandbox.prototype.initTools = function () {
@@ -283,8 +304,6 @@ Sandbox.prototype.initTools = function () {
 };    
 
 Sandbox.prototype.initProject = function () {
-    this.world.init();
-
     var light = new THREE.PointLight('#FFFFFF', 1, 20, 2);
     light.position.copy(this.camera.position);
     this.camera.add(light);
@@ -298,6 +317,8 @@ Sandbox.prototype.initProject = function () {
     
     this.scene.add(this.substrate);
     this.lastMouse = new THREE.Vector2(-1, -1);
+
+    this.socket.emit('user_connect', 'test');
 };
 
 Sandbox.prototype.initUI = function () {
@@ -404,7 +425,7 @@ Sandbox.prototype.getCurrentTool = function () {
     return this.tools[this.tool];
 };
 
-Sandbox.prototype.addBox = function (x, y, z, l, w, h, solid) {
+Sandbox.prototype.addBox = function (x, y, z, l, w, h) {
     var gx = toGrainCoord(x);
     var gy = toGrainCoord(y);
     var gz = toGrainCoord(z);
@@ -418,12 +439,7 @@ Sandbox.prototype.addBox = function (x, y, z, l, w, h, solid) {
     for (var i = gx; i < gx + gl; i++) {
         for (var j = gy; j < gy + gw; j++) {
             for (var k = gz; k < gz + gh; k++) {
-                if (solid
-                    || i == gx || i == gx + gl - 1 
-                    || j == gy || j == gy + gw - 1
-                    || k == gz || k == gz + gh - 1) {
-                    this.world.addGrain(i, j, k);
-                }
+                this.world.addGrain(i, j, k);
             }
         }
     }

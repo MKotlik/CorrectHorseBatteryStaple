@@ -22,6 +22,7 @@ socketio = SocketIO(app)
 
 users_rooms = {}  # Maps clientIDs to room names (projIDs)
 rooms_projects = {}  # Maps room names (projIDs) to (collaborators, proj_dict)
+users_sockets = {} # Maps clientIDs to socket connections
 
 
 # ===== ON STARTUP ===== #
@@ -221,6 +222,7 @@ def handle_connection(projID):
     # Continue if authenticated (assume that accessed thru project page)
     # Check for user's permission to access project in the app route, not here
     username = session['username']
+    print "SCULPTIO: user %s connected" % username
     if username in users_rooms:
         print 'SCULPTIO: user connected but already in users_rooms'
         if projID != users_rooms[username]:  # If prev project isnt this one
@@ -228,21 +230,27 @@ def handle_connection(projID):
             if cleanup_on_disconnect(username):
                 socketio.emit('user_leave', {'username': username}, room=room)
     join_room(str(projID))
-    users_rooms[username] = [projID]
+    users_rooms[username] = projID
+    users_sockets[username] = request.sid
     if projID not in rooms_projects:  # Aka this is first user for this proj
         # Technically should check operation status here (future feature?)
+        print 'fetching project from db'
         proj = db_projects.get_project(projID)[1]
         proj['active_users'] = [username]
         rooms_projects[projID] = proj
     else:
         # Add user to list of users currently active on this proj
+        print 'adding user to active users'
         rooms_projects[projID]['active_users'].append(username)
         proj = rooms_projects[projID]
-    response = {grainIndices: proj['sculpture']}
+    response = {
+        'grainIndices': list(proj['sculpture']) if 'sculpture' in proj else []
+    }
     # Giving username and grains to user
-    socketio.emit('complete_pull', response)
-    # Notify all collaborators about the newly joined user
-    socketio.emit('user_join', username, room=str(projID))
+    # !!! TRIGGERS COMPLETE PULL IN EVERY USER !!! WIP
+    socketio.emit('complete_pull', response, room=users_sockets[username])
+    # Notify all collaborators about the newly joined user WIP
+    # socketio.emit('user_join', username, room=str(projID))
     print 'SCULPTIO: completed user connection'
 
 
@@ -267,21 +275,38 @@ def handle_save(grainsList):
     if 'username' not in session:
         return False
     username = session['username']
+    print "SOCKETIO: got a complete_push"
     projID = users_rooms[username]
     proj = rooms_projects[str(projID)]
-    proj['sculpture'] = grainsList
+    proj['sculpture'] = set(grainsList)
     proj['timeLastSaved'] = datetime.datetime.utcnow()
     db_projects.update_sculpture(projID, grainsList)
-    socketio.emit('saved', {'username': username}, room=str(projID))
+    print "SOCKETIO: saved project"
+    # socketio.emit('saved', {'username': username}, room=str(projID))
 
 
 @socketio.on('partial_push')
 def handle_update(data):
     if 'username' not in session:
         return False
+
+    username = session['username']
     print "SOCKETIO: got a partial_push"
-    room = str(users_rooms[username])
-    socketio.emit('partial_pull', data, room=room)
+    projID = users_rooms[username]
+    proj = rooms_projects[projID]
+    
+    if 'sculpture' not in proj:
+        proj['sculpture'] = set()
+        
+    for grain in data['added']:
+        proj['sculpture'].add(grain)
+
+    for grain in data['removed']:
+        proj['sculpture'].remove(grain)
+
+    print "SOCKETIO: updated sculpture in memory"
+            
+    socketio.emit('partial_pull', data)
     print "SOCKETIO: passed a partial_push"
 
 
@@ -304,6 +329,7 @@ def handle_notif_read(data):
 
 def cleanup_on_disconnect(username):
     projID = users_rooms[username]
+    print projID
     users_rooms.pop(username)
     proj = rooms_projects[projID]
     if len(proj['active_users']) >= 2:

@@ -63,17 +63,17 @@ function toWorldCoord(grainCoordinate) {
 }
 
 function toGrainIndex(gx, gy, gz) {
-    var grainRange = 2 * Constants.MAX_GRAIN_COORD;
+    var grainRange = 2 * Constants.MAX_GRAIN_COORD + 1;
     return gx * grainRange * grainRange + gy * grainRange + gz;
 }
 
 function toGrainCoords(grainIndex) {
-    var grainRange = 2 * Constants.MAX_GRAIN_COORD;
+    var grainRange = 2 * Constants.MAX_GRAIN_COORD + 1;
     var gz = grainIndex % grainRange;
-    grainIndex /= grainRange;
+    grainIndex = Math.floor(grainIndex / grainRange);
     var gy = grainIndex % grainRange;
-    grainIndex /= grainRange;
-    var gz = grainIndex % grainRange;
+    grainIndex = Math.floor(grainIndex / grainRange);
+    var gx = grainIndex % grainRange;
     return new THREE.Vector3(gx, gy, gz);
 }
 
