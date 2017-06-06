@@ -11,6 +11,7 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 from utils import db_general, db_users, db_projects
 from flask_socketio import SocketIO, emit, send, join_room, leave_room
+import datetime
 
 app = Flask(__name__)
 app.secret_key = "horses"
@@ -47,7 +48,7 @@ def home():
         return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
-    
+
 
 @app.route("/login/")
 def login():
@@ -164,13 +165,15 @@ def ajaxchangepassword():
 
 @socketio.on('user_connect')
 def handle_connection(projID):
+    print "SCULPTIO: received user_connect event"
     if 'username' not in session:
+        print "SCULPTIO: user rejected because not authenticated"
         return False
     # Continue if authenticated (assume that accessed thru project page)
     # Check for user's permission to access project in the app route, not here
     username = session['username']
     if username in users_rooms:
-        print 'WARNING: user connected but already in users_rooms'
+        print 'SCULPTIO: user connected but already in users_rooms'
         if projID != users_rooms[username]:  # If prev project isnt this one
             room = str(users_rooms[username])
             if cleanup_on_disconnect(username):
@@ -191,6 +194,7 @@ def handle_connection(projID):
     socketio.emit('complete_pull', response)
     # Notify all collaborators about the newly joined user
     socketio.emit('user_join', username, room=str(projID))
+    print 'SCULPTIO: completed user connection'
 
 
 @socketio.on('user_disconnect')
@@ -209,16 +213,26 @@ def handle_meta_change(data):
 
 
 @socketio.on('save')
-def handle_save(data):
-    pass
+def handle_save(grainsList):
+    if 'username' not in session:
+        return False
+    username = session['username']
+    projID = users_rooms[username]
+    proj = rooms_projects[str(projID)]
+    proj['sculpture'] = grainsList
+    proj['timeLastSaved'] = datetime.datetime.utcnow()
+    db_projects.update_sculpture(projID, grainsList)
+    socketio.emit('saved', {'username': username}, room=str(projID))
 
 
-@socketio.on('update')
+@socketio.on('partial_push')
 def handle_update(data):
     if 'username' not in session:
         return False
+    print "SOCKETIO: got a partial_push"
     room = str(users_rooms[username])
-    socketio.emit('update', data, room=room)
+    socketio.emit('partial_pull', data, room=room)
+    print "SOCKETIO: passed a partial_push"
 
 
 @socketio.on('perm_request')
