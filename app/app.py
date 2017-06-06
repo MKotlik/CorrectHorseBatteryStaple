@@ -169,11 +169,14 @@ def handle_connection(projID):
         return False
     # Continue if authenticated (assume that accessed thru project page)
     # Check for user's permission to access project in the app route, not here
-    join_room(str(projID))
     username = session['username']
     if username in users_rooms:
         print 'WARNING: user connected but already in users_rooms'
-        # Remove user from connected list for old project
+        if projID != users_rooms[username]:  # If prev project isnt this one
+            room = str(users_rooms[username])
+            if cleanup_on_disconnect(username):
+                socketio.emit('user_leave', {'username': username}, room=room)
+    join_room(str(projID))
     users_rooms[username] = [projID]
     if projID not in rooms_projects:  # Aka this is first user for this proj
         # Technically should check operation status here (future feature?)
@@ -197,15 +200,9 @@ def handle_disconnect(data):
         return False
     username = session['username']
     if username in users_rooms:
-        projID = users_rooms[username]
-        users_rooms.pop(username)
-        proj = rooms_projects[projID]
-        if len(proj['active_users']) >= 2:
-            proj['active_users'].remove(username)
-        else:
-            db_projects.update_sculpture(projID, proj['sculpture'])
-            rooms_projects.pop(projID)
-
+        room = str(users_rooms[username])
+        if cleanup_on_disconnect(username):
+            socketio.emit('user_leave', {'username': username}, room=room)
 
 @socketio.on('meta_change')
 def handle_meta_change(data):
@@ -219,7 +216,10 @@ def handle_save(data):
 
 @socketio.on('update')
 def handle_update(data):
-    pass
+    if 'username' not in session:
+        return False
+    room = str(users_rooms[username])
+    socketio.emit('update', data, room=room)
 
 
 @socketio.on('perm_request')
@@ -238,6 +238,18 @@ def handle_notif_read(data):
 
 
 # ===== SOCKET HELPERS ===== #
+
+def cleanup_on_disconnect(username):
+    projID = users_rooms[username]
+    users_rooms.pop(username)
+    proj = rooms_projects[projID]
+    if len(proj['active_users']) >= 2:
+        proj['active_users'].remove(username)
+        return False
+    else:
+        db_projects.update_sculpture(projID, proj['sculpture'])
+        rooms_projects.pop(projID)
+        return True
 
 
 # ===== LOGIN HELPERS ===== #
