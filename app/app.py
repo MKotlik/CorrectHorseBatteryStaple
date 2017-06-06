@@ -182,15 +182,27 @@ def handle_connection(projID):
         # Add user to list of users currently active on this proj
         rooms_projects[projID]['active_users'].append(username)
         proj = rooms_projects[projID]
-    response = {'username': username, 'grainIndices': proj['sculpture']}
+    response = {grainIndices: proj['sculpture']}
     # Giving username and grains to user
     socketio.emit('complete_pull', response)
     # Notify all collaborators about the newly joined user
     socketio.emit('user_join', username, room=str(projID))
 
+
 @socketio.on('user_disconnect')
 def handle_disconnect(data):
-    pass
+    if 'username' not in session:
+        return False
+    username = session['username']
+    if username in users_rooms:
+        projID = users_rooms[username]
+        users_rooms.pop(username)
+        proj = rooms_projects[projID]
+        if len(proj['active_users']) >= 2:
+            proj['active_users'].remove(username)
+        else:
+            db_projects.update_sculpture(projID, proj['sculpture'])
+            rooms_projects.pop(projID)
 
 
 @socketio.on('meta_change')
@@ -221,6 +233,9 @@ def handle_accept_request(data):
 @socketio.on('notif_read')
 def handle_notif_read(data):
     pass
+
+
+# ===== SOCKET HELPERS ===== #
 
 
 # ===== LOGIN HELPERS ===== #
