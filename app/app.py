@@ -47,7 +47,7 @@ def home():
         return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']))
     else:
         return render_template('home_public.html')
-
+    
 
 @app.route("/login/")
 def login():
@@ -93,12 +93,16 @@ def search(query):
     # NOTE: should we have a search page w/o query as well? (/search/)
     if not is_logged_in():
         return redirect(url_for('login'))
-    return render_template('search.html')
+    if query == '?':
+        return redirect(url_for('home'))
+    else:
+        return render_template('search.html')
 
 
 @app.route("/test/")
 def test():
     return render_template('editor.html')
+
 
 
 # ===== AJAX ROUTES ===== #
