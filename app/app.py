@@ -87,16 +87,16 @@ def profile():
     return render_template('settings.html')
 
 
-@app.route("/search/<query>")
+@app.route("/search/<query>/")
 def search(query):
     '''Displays search results for given query'''
     # NOTE: should we have a search page w/o query as well? (/search/)
     if not is_logged_in():
         return redirect(url_for('login'))
-    if query == '?':
+    if query == '':
         return redirect(url_for('home'))
     else:
-        return render_template('search.html')
+        return render_template('search.html',query=query)
 
 
 @app.route("/test/")

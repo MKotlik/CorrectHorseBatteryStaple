@@ -11,3 +11,13 @@
 <li><a href="/test">Editor</a></li>
 <li><a href="/logout/">Logout</a></li>
 {% endblock nav_links %}
+
+{% block body %}
+<div class="page-header">
+  <h1>Your search: {{query}}</h1><br>
+  <h1>Results</h1>
+  <ul class="list-group">
+    {{results | safe}}
+  </ul>
+</div>
+{% endblock body %} 
