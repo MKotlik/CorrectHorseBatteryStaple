@@ -85,7 +85,8 @@ def project(projID):
     if not is_logged_in():
         return redirect(url_for('login'))
     else:
-        return render_template('project.html')
+        project=db_projects.get_project(projID)
+        return render_template('project.html',project_name="placeholder"+str(project))
 
 
 @app.route("/settings/")
