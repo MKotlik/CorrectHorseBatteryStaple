@@ -59,6 +59,12 @@ footer {
     position: absolute;
 }
 
+.scrollable-menu {
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+}
+
 .toolbox {
     position: absolute;
 }

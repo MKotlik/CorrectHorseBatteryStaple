@@ -13,16 +13,18 @@
 {% endblock nav_links %}
 
 {% block body %}
-<div class="page-header">
-  <h1>Owned Projects</h1>
-  <ul class="list-group">
-    {{owned_projects | safe}}
-  </ul>
-</div>
-<div class="page-header">
-  <h1>Projects Contributed To</h1>
-  <ul class="list-group">
+<div class="container">
+  <div class="page-header">
+    <h1>Owned Projects</h1>
+    <ul class="list-group">
+      {{owned_projects | safe}}
+    </ul>
+  </div>
+  <div class="page-header">
+    <h1>Projects Contributed To</h1>
+    <ul class="list-group">
     {{permitted_projects | safe}}
-  </ul>
+    </ul>
+  </div>
 </div>
 {% endblock body %} 
