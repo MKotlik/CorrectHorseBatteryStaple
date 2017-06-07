@@ -84,7 +84,8 @@ def project(projID):
     projID is generated when a new project is created'''
     if not is_logged_in():
         return redirect(url_for('login'))
-    pass
+    else:
+        return render_template('project.html')
 
 
 @app.route("/settings/")
