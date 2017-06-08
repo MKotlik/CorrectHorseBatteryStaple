@@ -92,11 +92,11 @@ def project(projID):
         onlinestring = ''
         for person in contributors:
             userstring += '<li class="list-group-item">' + person + '</li>'
-            if int(users_rooms.get(person)) == int(projID):
+            if users_rooms.get(person) == projID:
                 onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
             else:
                 onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
-        return render_template('project.html',project_name="placeholder"+str(project), contributors=userstring, status=onlinestring)
+        return render_template('project.html',project_name=str(project.get('name')), contributors=userstring, status=onlinestring)
 
 
 @app.route("/settings/")
