@@ -85,8 +85,18 @@ def project(projID):
     if not is_logged_in():
         return redirect(url_for('login'))
     else:
-        project=db_projects.get_project(int(projID))
-        return render_template('project.html',project_name="placeholder"+str(project))
+        project = db_projects.get_project(int(projID))[1]
+        users_rooms[session['username']]= projID
+        userstring = ''
+        contributors = project['contributors']
+        onlinestring = ''
+        for person in contributors:
+            userstring += '<li class="list-group-item">' + person + '</li>'
+            if int(users_rooms.get(person)) == int(projID):
+                onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
+            else:
+                onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
+        return render_template('project.html',project_name="placeholder"+str(project), contributors=userstring, status=onlinestring)
 
 
 @app.route("/settings/")

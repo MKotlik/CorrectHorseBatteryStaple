@@ -26,13 +26,10 @@
     <div class="col-md-3">
       <div class="text-center" style="font-size:30px;">Collaborators</div>
       <ul class="list-group col-md-10">
-	<li class="list-group-item">project</li>
-	<li class="list-group-item">project2</li>
-	<li class="list-group-item">project4</li>
+	{{contributors | safe}}
       </ul>
       <ul class="list-group col-md-2">
-	<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>
-	<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>
+	{{status | safe}}
       </ul>
     </div>
     <div class="sandbox col-md-6">
