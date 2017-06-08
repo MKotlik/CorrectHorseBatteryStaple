@@ -85,7 +85,7 @@ def project(projID):
     if not is_logged_in():
         return redirect(url_for('login'))
     else:
-        project=db_projects.get_project(projID)
+        project=db_projects.get_project(int(projID))
         return render_template('project.html',project_name="placeholder"+str(project))
 
 
