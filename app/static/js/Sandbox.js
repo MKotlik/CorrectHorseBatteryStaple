@@ -2,14 +2,14 @@ function Sandbox(socket, container, renderer, camera, controls,
                  scene, raycaster, world, substrate) {
     this.socket = socket;
     this.container = container;
-    
+
     this.renderer = renderer;
-    
+
     this.camera = camera;
     this.controls = controls;
 
     this.scene = scene;
-    
+
     this.raycaster = raycaster;
 
     this.world = world;
@@ -18,7 +18,7 @@ function Sandbox(socket, container, renderer, camera, controls,
     this.task = null;
     this.tool = null;
     this.tools = {};
-    
+
     this.active = false;
     this.lastMouse = null;
 
@@ -51,7 +51,7 @@ Sandbox.create = function (socket, container) {
 
     var world = World.create();
     var substrate = new THREE.Object3D();
-    
+
     var sandbox = new Sandbox(socket, container, renderer, camera, controls,
                               scene, raycaster, world, substrate);
 
@@ -73,7 +73,7 @@ Sandbox.prototype.initListeners = function () {
     element.on('contextmenu', (e) => {
         e.preventDefault();
     });
-    
+
     element.on('mousedown', (e) => {
         if (e.which == 1) {
             this.active = true;
@@ -90,14 +90,14 @@ Sandbox.prototype.initListeners = function () {
             this.run();
         }
     });
-    
+
     element.on('mousemove', (e) => {
         if (this.active) {
             var now = (new Date()).getTime();
-            
+
             var startX = this.lastMouse.x >= 0 ? this.lastMouse.x : e.offsetX;
             var startY = this.lastMouse.y >= 0 ? this.lastMouse.y : e.offsetY;
-            
+
             var points = interpolate(startX, startY,
                                      e.offsetX, e.offsetY);
 
@@ -118,7 +118,7 @@ Sandbox.prototype.initListeners = function () {
             //e.preventDefault();
         }
     });
-    
+
     window.addEventListener('keydown', (e) => {
         switch (e.keyCode) {
         case 32: //space
@@ -144,7 +144,7 @@ Sandbox.prototype.initListeners = function () {
     this.socket.on('partial_pull', (data) => {
         this.partialPull(data);
     });
-    
+
     this.socket.on('complete_pull', (data) => {
         this.completePull(data);
     });
@@ -178,13 +178,13 @@ Sandbox.prototype.partialPull = function (data) {
 
 Sandbox.prototype.completePull = function (data) {
     console.log('complete pull');
-    
+
     this.world.resetGrains();
 
     if (data.grainIndices.length == 0) {
-        this.addBox(-0.5, -0.5, -0.5, 1, 1, 1); 
+        this.addBox(-0.5, -0.5, -0.5, 1, 1, 1);
     }
-    
+
     for (var index of data.grainIndices) {
         var grainCoords = toGrainCoords(index);
         this.world.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
@@ -228,7 +228,7 @@ Sandbox.prototype.initTools = function () {
 
                 var sphere = this.world.grainsInRadius(gx, gy, gz, gr);
                 var toRemove = [];
-                
+
                 for (var base of sphere) {
                     if (this.world.isOutwardInDirection(base, normal)) {
                         toRemove.push(base);
@@ -275,9 +275,9 @@ Sandbox.prototype.initTools = function () {
                 }
 
                 var sphere = this.world.grainsInRadius(gx, gy, gz, gr);
-                
+
                 var startGrain, endGrain, currentGrain;
-                
+
                 for (var base of sphere) {
                     if (this.world.isOutwardInDirection(base, normal)) {
                         var start = toGrainVector(base.position);
@@ -294,36 +294,43 @@ Sandbox.prototype.initTools = function () {
         pull.element.find('.tool-slider').val(pull.options.radius);
         pull.element.find('.tool-radius').text(pull.options.radius);
     };
-        
+
     this.tools = {
         'push': push,
         'pull': pull
     };
-        
+
     this.tool = 'pull';
-};    
+};
 
 Sandbox.prototype.initProject = function () {
     var light = new THREE.PointLight('#FFFFFF', 1, 20, 2);
     light.position.copy(this.camera.position);
     this.camera.add(light);
     this.scene.add(this.camera);
-    
+
     light = new THREE.AmbientLight('#FFFFFF', 0.5);
     this.scene.add(light);
 
     light = new THREE.DirectionalLight('#FFFFFF', 0.2);
     this.scene.add(light);
-    
+
     this.scene.add(this.substrate);
     this.lastMouse = new THREE.Vector2(-1, -1);
 
-    this.socket.emit('user_connect', 'test');
+    // Get projID from url
+    var url = window.location.href;
+    var projInd = url.indexOf('/project/');
+    this.projID = parseInt(url.substring(projInd + 9));
+    console.log('projID: ' + this.projID);
+
+    // Emit connect event with projID to server
+    this.socket.emit('user_connect', this.projID);
 };
 
 Sandbox.prototype.initUI = function () {
     var toolbox = $('<table>').attr('class', 'toolbox');
-    
+
     for (var tool in this.tools) {
         var row = $('<tr>');
 
@@ -342,13 +349,13 @@ Sandbox.prototype.initUI = function () {
                 }
             };
         })(tool));
-        
+
         if (tool == this.tool) {
             row.attr('class', 'tool-row tool-selected');
         } else {
             row.attr('class', 'tool-row tool-deselected');
         }
-        
+
         var icon = $('<img>').attr({
             src: Constants.IMAGE_PATH + tool + '.png',
             'class': 'tool-icon'
@@ -374,7 +381,7 @@ Sandbox.prototype.initUI = function () {
         })(tool, slider, label));
 
         //slider.hide();
-        
+
         //icon.hover(((slider) => {
             //return (e) => {
                 //console.log('in');
@@ -386,7 +393,7 @@ Sandbox.prototype.initUI = function () {
                 //slider.hide();
             //};
         //})(slider));
-        
+
         row.append($('<td>').append(icon));
         row.append($('<td>').append(slider));
         row.append($('<td>').append(label));
@@ -407,7 +414,7 @@ Sandbox.prototype.reset = function (task) {
     if (this.task) {
         this.task();
     }
-    
+
     this.run();
 };
 

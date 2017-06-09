@@ -22,7 +22,7 @@ socketio = SocketIO(app)
 
 users_rooms = {}  # Maps clientIDs to room names (projIDs)
 rooms_projects = {}  # Maps room names (projIDs) to (collaborators, proj_dict)
-users_sockets = {} # Maps clientIDs to socket connections
+users_sockets = {}  # Maps clientIDs to socket connections
 
 
 # ===== ON STARTUP ===== #
@@ -86,21 +86,18 @@ def project(projID):
         return redirect(url_for('login'))
     else:
         project = db_projects.get_project(int(projID))[1]
-        users_rooms[session['username']]= projID
+        users_rooms[session['username']] = projID
         userstring = ''
         contributors = project['contributors']
         onlinestring = ''
         for person in contributors:
             userstring += '<li class="list-group-item">' + person + '</li>'
-            if users_rooms.get(person) == projID:
+            if person in users_rooms and users_rooms.get(person) == projID:
                 onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
             else:
                 onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
-        savestr = "Last Save: "+str(project.get('timeLastSaved'))
-        return render_template('project.html',project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr)
-
-
-
+        savestr = "Last Save: " + str(project.get('timeLastSaved'))
+        return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr)
 
 
 @app.route("/settings/")
@@ -225,7 +222,8 @@ def ajaxcreate():
     access_rights = (request.form['accessRights'] == 'public')
     # visible = (request.form['visible'] == 'True')
 
-    projID = db_projects.add_project(name, owner, description, access_rights,permissions)[1]['projID']
+    projID = db_projects.add_project(
+        name, owner, description, access_rights, permissions)[1]['projID']
     return 'ok: ' + str(projID)
 
 
@@ -233,7 +231,7 @@ def ajaxcreate():
 
 @socketio.on('user_connect')
 def handle_connection(projID):
-    print "SCULPTIO: received user_connect event"
+    print "SCULPTIO: received user_connect event for project: " + str(projID)
     if 'username' not in session:
         print "SCULPTIO: user rejected because not authenticated"
         return False
@@ -241,12 +239,17 @@ def handle_connection(projID):
     # Check for user's permission to access project in the app route, not here
     username = session['username']
     print "SCULPTIO: user %s connected" % username
+    cur_proj = users_rooms[username]
     if username in users_rooms:
         print 'SCULPTIO: user connected but already in users_rooms'
-        if projID != users_rooms[username]:  # If prev project isnt this one
+        if int(projID) != int(cur_proj):  # If prev project isnt this one
+            print "DEBUG: PREV PROJECT WRONG"
             room = str(users_rooms[username])
+            print "DEBUG, AT LEAST WE GOT A ROOM NAME"
             if cleanup_on_disconnect(username):
+                print "DEBUG, CLEANING UP A PROJECT"
                 socketio.emit('user_leave', {'username': username}, room=room)
+                print "DEBUG, EMITTED THIS IN A SOCKET"
     join_room(str(projID))
     users_rooms[username] = projID
     users_sockets[username] = request.sid
@@ -266,7 +269,8 @@ def handle_connection(projID):
     }
     # Giving username and grains to user
     # !!! TRIGGERS COMPLETE PULL IN EVERY USER !!! WIP
-    socketio.emit('complete_pull', response, room=users_sockets[username])
+    # socketio.emit('complete_pull', response, room=users_sockets[username])
+    socketio.emit('complete_pull', response, room=str(projID))
     # Notify all collaborators about the newly joined user WIP
     # socketio.emit('user_join', username, room=str(projID))
     print 'SCULPTIO: completed user connection'
