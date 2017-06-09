@@ -16,3 +16,9 @@ sandbox.reset(function () {
     //this.addBox(0, 0, 0, 0.1, 0.1, 10, 'blue');
     this.addBox(-0.5, -0.5, -0.5, 1, 1, 1);
 });
+
+$(window).on('beforeunload', function(e) {
+    if (socket !== undefined && socket !== null) {
+        socket.emit('user_disconnect');
+    }
+});

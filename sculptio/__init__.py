@@ -283,14 +283,15 @@ def handle_connection(projID):
 
 
 @socketio.on('user_disconnect')
-def handle_disconnect(data):
-    if 'username' not in session:
-        return False
-    username = session['username']
-    if username in users_rooms:
-        room = str(users_rooms[username])
-        if cleanup_on_disconnect(username):
-            socketio.emit('user_leave', {'username': username}, room=room)
+def handle_disconnect():
+    print 'SCULPTIO: user_disconnect event received'
+    if 'username' in session:
+        username = session['username']
+        if username in users_rooms:
+            room = str(users_rooms[username])
+            if cleanup_on_disconnect(username):
+                socketio.emit('user_leave', {'username': username}, room=room)
+                print 'SCULPTIO: notified other clients about user leaving'
 
 
 @socketio.on('meta_change')
