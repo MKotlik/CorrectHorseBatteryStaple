@@ -1,0 +1,10 @@
+What Still Needs To Be Done:
+- Bugfix: Complete_pull when canvas loads results in a tiny af box
+- Feature: Collaborators list in HTML should be dynamically built after
+  socket connection
+- Feature: support user_join and user_leave events again, update other clients'
+  collaborators lists
+- Feature: remove public/private option from the create page
+- Design: change checkmark/cross icons in collaborators list to
+  red and green dots
+- Design: give the create page form the same dimensions as the login form
