@@ -93,11 +93,12 @@ def project(projID):
         contributors = project['contributors']
         onlinestring = ''
         for person in contributors:
-            userstring += '<li class="list-group-item">' + person + '</li>'
-            if person in users_rooms and int(users_rooms.get(person)) == int(projID):
-                onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
-            else:
-                onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
+            if person != '':
+                userstring += '<li class="list-group-item">' + person + '</li>'
+                if person in users_rooms and int(users_rooms.get(person)) == int(projID):
+                    onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
+                else:
+                    onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
         savestr = "Last Save: " + str(project.get('timeLastSaved'))
         return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr, test="users_rooms: " + str(users_rooms))
 
@@ -223,7 +224,6 @@ def ajaxcreate():
     # Using this to convert from string to boolean
     access_rights = (request.form['accessRights'] == 'public')
     # visible = (request.form['visible'] == 'True')
-
     projID = db_projects.add_project(
         name, owner, description, access_rights, permissions)[1]['projID']
     db_users.add_owned_proj(owner,projID)
