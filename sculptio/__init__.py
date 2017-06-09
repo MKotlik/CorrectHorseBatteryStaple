@@ -12,6 +12,7 @@ from flask import Flask, render_template, request, session, url_for, redirect
 from utils import db_general, db_users, db_projects
 from flask_socketio import SocketIO, emit, send, join_room, leave_room
 import datetime
+import json
 
 app = Flask(__name__)
 app.secret_key = "horses"
@@ -226,7 +227,7 @@ def ajaxcreate():
     # visible = (request.form['visible'] == 'True')
     projID = db_projects.add_project(
         name, owner, description, access_rights, permissions)[1]['projID']
-    db_users.add_owned_proj(owner,projID)
+    db_users.add_owned_proj(owner, projID)
     for user in collab_list:
         db_projects.add_contributor(projID, user)
         db_users.add_contributed_proj(user, projID)
@@ -270,8 +271,10 @@ def handle_connection(projID):
         print 'adding user to active users'
         rooms_projects[projID]['active_users'].append(username)
         proj = rooms_projects[projID]
+    grainIndices = json.dumps(
+        list(proj['sculpture']) if 'sculpture' in proj else [])
     response = {
-        'grainIndices': list(proj['sculpture']) if 'sculpture' in proj else []
+        'grainIndices': grainIndices
     }
     # Giving username and grains to user
     # !!! TRIGGERS COMPLETE PULL IN EVERY USER !!! WIP
@@ -306,7 +309,7 @@ def handle_save(grainsList):
     username = session['username']
     print "SOCKETIO: got a complete_push"
     projID = users_rooms[username]
-    proj = rooms_projects[str(projID)]
+    proj = rooms_projects[projID]
     proj['sculpture'] = set(grainsList)
     proj['timeLastSaved'] = datetime.datetime.utcnow()
     db_projects.update_sculpture(projID, grainsList)
