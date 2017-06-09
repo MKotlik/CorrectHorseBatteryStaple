@@ -327,7 +327,7 @@ def handle_update(data):
         proj['sculpture'] = set()
 
     for grain in data['added']:
-        proj['sculpture'].add(grain)
+        proj['sculpture'].append(grain)
 
     for grain in data['removed']:
         proj['sculpture'].remove(grain)
