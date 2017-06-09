@@ -67,6 +67,8 @@ def signup():
 def logout():
     '''If logged in, logs user out, redirects to home'''
     if is_logged_in():
+        if session['username'] in users_rooms:
+            users_rooms.pop(session['username'])
         session.pop('username')
     return redirect(url_for('home'))
 
@@ -92,7 +94,7 @@ def project(projID):
         onlinestring = ''
         for person in contributors:
             userstring += '<li class="list-group-item">' + person + '</li>'
-            if person in users_rooms and users_rooms.get(person) == projID:
+            if person in users_rooms and int(users_rooms.get(person)) == int(projID):
                 onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
             else:
                 onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
