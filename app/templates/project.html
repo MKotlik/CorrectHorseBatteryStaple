@@ -24,10 +24,21 @@
   <div class="row">
 
     <div class="col-md-3">
+      <div class="text-center" style="font-size:30px;">Collaborators</div>
+      <ul class="list-group col-md-10">
+	{{contributors | safe}}
+      </ul>
+      <ul class="list-group col-md-2">
+	{{status | safe}}
+      </ul>
     </div>
-    <div class="sandbox col-md-6">
+    <div class="col-md-6">
+      <div class="sandbox">
+      </div>
     </div>
     <div class="col-md-3">
+      <button type="button" class="btn btn-primary btn-lg btn-block">Save</button><br>
+      {{last_saved}}
     </div>
      
   </div>
