@@ -43,6 +43,12 @@ jonalfD -- 2016-12-04 14:32
 ==============================
 
 ==============================
+ kennethL -- 2017-05-16 14:30
+
+- Added initial JS structure files and libraries
+==============================
+
+==============================
  nickN -- 2017-05-17 12:30
 
 - Worked to determine math for the camera
@@ -65,10 +71,23 @@ jonalfD -- 2016-12-04 14:32
 ==============================
 
 ==============================
+ nickN -- 2017-05-17 12:30
+
+- Worked with Kenneth to bugfix math for the camera
+- Fixed rotation when camera angle was near vertical
+==============================
+
+==============================
  mishaK -- 2017-05-17 13:20
 
 - Added headings for all funcs to be added to database.py
 - Finished & tested all user funcs in database.py
+==============================
+
+==============================
+ kennethL -- 2017-05-17 14:20
+
+- Did some more work on panning and rotating
 ==============================
 
 ==============================
@@ -93,23 +112,17 @@ jonalfD -- 2016-12-04 14:32
 ==============================
 
 ==============================
+ kennethL -- 2017-05-18 14:10
+
+- Did some refactoring of JS
+- Restructured input/vector processing
+==============================
+
+==============================
  mishaK -- 2017-05-19 12:30
 
 - Added login checks & redirects to app.py project, profile, search
 - Planned out socketio functionality in socket_ideas.txt
-==============================
-
-==============================
- mishaK -- 2017-05-22 02:45
-
-- Finished login & register pages (with password verification & ajax!)
-==============================
-
-==============================
- nickN -- 2017-05-17 12:30
-
-- Worked with Kenneth to bugfix math for the camera
-- Fixed rotation when camera angle was near vertical
 ==============================
 
 ==============================
@@ -120,9 +133,29 @@ jonalfD -- 2016-12-04 14:32
 ==============================
 
 ==============================
+ mishaK -- 2017-05-22 02:45
+
+- Finished login & register pages (with password verification & ajax!)
+==============================
+
+==============================
+ kennethL -- 2017-05-22 23:10
+
+- Rotation finally works!
+- Also, zoom
+==============================
+
+==============================
  mishaK -- 2017-05-23 22:15
 
 - Added database initialization before first request
+==============================
+
+==============================
+ kennethL -- 2017-05-25 14:45
+
+- Refactoring to Constants
+- Other bugfixes
 ==============================
 
 ==============================
@@ -136,9 +169,24 @@ jonalfD -- 2016-12-04 14:32
 ==============================
 
 ==============================
-nickN -- 2017-05-31 12:15
+ kennethL -- 2017-05-30 18:47
+
+- Scrapped our camera control code in favor of the OrbitControls library :(
+- Finally fixed our lag issues!!!
+- Set up basic raycasting
+==============================
+
+==============================
+ nickN -- 2017-05-31 12:15
 
 - Began thinking about extrude function
+==============================
+
+==============================
+ kennethL - 2017-05-31 20:24
+
+- Carve tool functional!!
+- More refactoring (the grind never stops)
 ==============================
 
 ==============================

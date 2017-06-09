@@ -265,6 +265,7 @@ def handle_connection(projID):
         print 'fetching project from db'
         proj = db_projects.get_project(projID)[1]
         proj['active_users'] = [username]
+        proj['sculpture'] = set(proj['sculpture'])
         rooms_projects[projID] = proj
     else:
         # Add user to list of users currently active on this proj
@@ -330,7 +331,7 @@ def handle_update(data):
         proj['sculpture'] = set()
 
     for grain in data['added']:
-        proj['sculpture'].append(grain)
+        proj['sculpture'].add(grain)
 
     for grain in data['removed']:
         proj['sculpture'].remove(grain)
@@ -367,7 +368,7 @@ def cleanup_on_disconnect(username):
         proj['active_users'].remove(username)
         return False
     else:
-        db_projects.update_sculpture(projID, proj['sculpture'])
+        db_projects.update_sculpture(projID, list(proj['sculpture']))
         rooms_projects.pop(projID)
         return True
 
