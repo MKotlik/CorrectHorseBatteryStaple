@@ -8,5 +8,7 @@ What Still Needs To Be Done:
 - Design: change checkmark/cross icons in collaborators list to
   red and green dots
 - Design: give the create page form the same dimensions as the login form
+- Remove: permissions from setup page
+- Design: homepage check for empty lists
 - DEVLOG
 - COMMENTS IN CODE (BUT ONLY AFTER EVERYTHING ELSE IS DONE PLEASE)
