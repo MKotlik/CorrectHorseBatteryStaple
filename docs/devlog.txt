@@ -217,6 +217,19 @@ nickN -- 2017-06-05 10:00
 ==============================
 
 ==============================
+ kennethL -- 2017-06-05 20:30
+
+- Yet more bugfixes
+- Carve and build both functional at last (with center of mass algorithm)
+==============================
+
+==============================
+ kennethL -- 2017-06-06 02:30
+
+- UI and room things
+==============================
+
+==============================
 jamesY -- 2017-06-06 02:20
 
 - Finished create.html
