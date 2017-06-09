@@ -226,6 +226,10 @@ def ajaxcreate():
 
     projID = db_projects.add_project(
         name, owner, description, access_rights, permissions)[1]['projID']
+    db_users.add_owned_proj(owner,projID)
+    for user in collab_list:
+        db_projects.add_contributor(projID, user)
+        db_users.add_contributed_proj(user, projID)
     return 'ok: ' + str(projID)
 
 
