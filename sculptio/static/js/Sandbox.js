@@ -181,7 +181,11 @@ Sandbox.prototype.completePull = function (data) {
 
     this.world.resetGrains();
 
+    console.log(data.grainIndices);
+    console.log(data.grainIndices.length);
+    
     if (data.grainIndices.length == 0) {
+        console.log('test');
         this.addBox(-0.5, -0.5, -0.5, 1, 1, 1);
     }
 
@@ -190,6 +194,8 @@ Sandbox.prototype.completePull = function (data) {
         this.world.addGrain(grainCoords.x, grainCoords.y, grainCoords.z);
     }
 
+    console.log(data.grainIndices);
+    console.log(this.world.grains);
     this.run();
 };
 

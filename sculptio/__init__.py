@@ -271,8 +271,7 @@ def handle_connection(projID):
         print 'adding user to active users'
         rooms_projects[projID]['active_users'].append(username)
         proj = rooms_projects[projID]
-    grainIndices = json.dumps(
-        list(proj['sculpture']) if 'sculpture' in proj else [])
+    grainIndices = list(proj['sculpture']) if 'sculpture' in proj else []
     response = {
         'grainIndices': grainIndices
     }
