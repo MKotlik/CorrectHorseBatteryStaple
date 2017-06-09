@@ -1,3 +1,8 @@
+/**
+ * Class wrapping the entirety of the project environment; contains most listeners,
+ * including sockets, and manages tools.
+ */
+
 function Sandbox(socket, container, renderer, camera, controls,
                  scene, raycaster, world, substrate) {
     this.socket = socket;

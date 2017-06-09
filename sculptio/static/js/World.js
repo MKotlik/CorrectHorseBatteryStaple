@@ -1,3 +1,7 @@
+/**
+ * Wrapper class for all grain management and utility functions.
+ */
+
 function World(grains, changes) {
     this.grains = grains;
     this.changes = changes;

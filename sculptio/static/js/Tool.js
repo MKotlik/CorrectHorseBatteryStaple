@@ -1,3 +1,7 @@
+/**
+ * Wrapper class for any tools. Essentially an abstract class (or as abstract as JS gets).
+ */
+
 function Tool(name, options, element) {
     this.name = name;
     this.options = options;

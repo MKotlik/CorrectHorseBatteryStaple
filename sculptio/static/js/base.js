@@ -1,3 +1,7 @@
+/**
+ * Base file that depends on all other JS files. Sets up sandbox and other JS elements.
+ */
+
 var socket = io();
 var container = $('.sandbox');
 var sandbox = Sandbox.create(socket, container);

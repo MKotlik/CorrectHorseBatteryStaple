@@ -1,3 +1,7 @@
+/**
+ * Contains utility functions, mostly math and grain conversion type functions.
+ */
+
 function sign(n) {
     if (n > 0) {
         return 1;

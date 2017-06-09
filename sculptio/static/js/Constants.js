@@ -1,3 +1,7 @@
+/**
+ * Utility class for all constants used in all JS files.
+ */
+
 function Constants() {
     throw new Error('Constants should not be instantiated!');
 }
