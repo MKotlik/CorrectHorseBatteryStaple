@@ -26,11 +26,9 @@
 
     <div class="col-md-3">
       <div class="text-center" style="font-size:30px;">Collaborators</div>
-      <ul class="list-group col-md-10">
-	{{contributors | safe}}
+      <ul class="list-group col-md-10 contributors">
       </ul>
-      <ul class="list-group col-md-2">
-	{{status | safe}}
+      <ul class="list-group col-md-2 statuses">
       </ul>
     </div>
     <div class="col-md-6">
@@ -39,10 +37,8 @@
     </div>
     <div class="col-md-3">
       <button type="button" class="btn btn-primary btn-lg btn-block" id="save-button">Save</button><br>
-      {{last_saved}}<br>
-      {{test}}
+      <div class="saved-timestamp"></div><br>
     </div>
-
   </div>
 </div>
 <script src="/static/js/socket.io.js"></script>

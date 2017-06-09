@@ -90,18 +90,18 @@ def project(projID):
     else:
         project = db_projects.get_project(int(projID))[1]
         users_rooms[session['username']] = projID
-        userstring = ''
-        contributors = project['contributors']
-        onlinestring = ''
-        for person in contributors:
-            if person != '':
-                userstring += '<li class="list-group-item">' + person + '</li>'
-                if person in users_rooms and int(users_rooms.get(person)) == int(projID):
-                    onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
-                else:
-                    onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
+        # userstring = ''
+        # contributors = project['contributors']
+        # onlinestring = ''
+        # for person in contributors:
+            # if person != '':
+                # userstring += '<li class="list-group-item">' + person + '</li>'
+                # if person in users_rooms and int(users_rooms.get(person)) == int(projID):
+                    # onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-ok" style="color:green;"></i></li>'
+                # else:
+                    # onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
         savestr = "Last Save: " + str(project.get('timeLastSaved'))
-        return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr)
+        return render_template('project.html', project_name=str(project.get('name')), user=session['username'])
 
 
 @app.route("/settings/")
@@ -135,11 +135,6 @@ def search():
                 project['name'] + (20 * '&nbsp') + 'Owner: ' + \
                 project['owner'] + '</a>\n'
         return render_template('search.html', query=query, results=resultstring,user=session['username'])
-
-
-@app.route("/test/")
-def test():
-    return render_template('editor.html')
 
 
 # ===== AJAX ROUTES ===== #
@@ -281,7 +276,7 @@ def handle_connection(projID):
     # socketio.emit('complete_pull', response, room=users_sockets[username])
     socketio.emit('complete_pull', response, room=str(projID))
     # Notify all collaborators about the newly joined user WIP
-    # socketio.emit('user_join', username, room=str(projID))
+    socketio.emit('user_join', username, room=str(projID))
     print 'SCULPTIO: completed user connection'
 
 
@@ -314,7 +309,7 @@ def handle_save(grainsList):
     proj['timeLastSaved'] = datetime.datetime.utcnow()
     db_projects.update_sculpture(projID, grainsList)
     print "SOCKETIO: saved project"
-    # socketio.emit('saved', {'username': username}, room=str(projID))
+    socketio.emit('saved', proj['timeLastSaved'], room=str(projID))
 
 
 @socketio.on('partial_push')
