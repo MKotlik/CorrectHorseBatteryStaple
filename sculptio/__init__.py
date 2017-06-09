@@ -101,7 +101,7 @@ def project(projID):
                 else:
                     onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
         savestr = "Last Save: " + str(project.get('timeLastSaved'))
-        return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr, test="users_rooms: " + str(users_rooms),user=session['username'])
+        return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr)
 
 
 @app.route("/settings/")
