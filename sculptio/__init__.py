@@ -47,7 +47,7 @@ def root():
 def home():
     '''Displays the homepage, diff versions based on login status'''
     if is_logged_in():
-        return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']))
+        return render_template('home_user.html', owned_projects=display_projects(session['username']), permitted_projects=display_contributions(session['username']),user=session['username'])
     else:
         return render_template('home_public.html')
 
@@ -78,7 +78,7 @@ def logout():
 def create():
     if not is_logged_in():
         return redirect(url_for('login'))
-    return render_template('create.html')
+    return render_template('create.html',user=session['username'])
 
 
 @app.route("/project/<projID>/")
@@ -101,7 +101,7 @@ def project(projID):
                 else:
                     onlinestring += '<li class="list-group-item text-center"><i class="glyphicon glyphicon-remove" style="color:red;"></i></li>'
         savestr = "Last Save: " + str(project.get('timeLastSaved'))
-        return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr, test="users_rooms: " + str(users_rooms))
+        return render_template('project.html', project_name=str(project.get('name')), contributors=userstring, status=onlinestring, last_saved=savestr, test="users_rooms: " + str(users_rooms),user=session['username'])
 
 
 @app.route("/settings/")
@@ -110,7 +110,7 @@ def profile():
     # NOTE: Shows a "please log in" page or redirects to login if not logged in
     if not is_logged_in():
         return redirect(url_for('login'))
-    return render_template('settings.html')
+    return render_template('settings.html',user=session['username'])
 
 
 @app.route("/search/")
@@ -134,7 +134,7 @@ def search():
                 str(project['projID']) + '" class="list-group-item">' + \
                 project['name'] + (20 * '&nbsp') + 'Owner: ' + \
                 project['owner'] + '</a>\n'
-        return render_template('search.html', query=query, results=resultstring)
+        return render_template('search.html', query=query, results=resultstring,user=session['username'])
 
 
 @app.route("/test/")
