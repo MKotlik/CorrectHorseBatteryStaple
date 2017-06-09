@@ -1,6 +1,9 @@
 var socket = io();
 var container = $('.sandbox');
 var sandbox = Sandbox.create(socket, container);
+//var button = document.getElementByID("butt");
+
+//button.addEventListener("click", sandbox.completePush)
 
 container.on('contextmenu', function (e) {
     e.preventDefault();
