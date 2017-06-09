@@ -12,43 +12,47 @@
 <li><a href="/logout/">Logout</a></li>
 {% endblock nav_links %}
 
+
 {% block body %}
-<div class="panel panel-default">
-  <div class="panel-heading">
-    Create a Project
-  </div>
-  <div class="panel-body">
-    <div id="createStatus">
+<div class="container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      Create a Project
     </div>
-    <form id="createForm" action="/ajaxcreate/" method="post">
-      <div class="form-group">
-        <label for="projectName">Project Name</label>
-        <input type="text" class="form-control" id="projectName" name="name" placeholder="Project Name">
+    <div class="panel-body">
+      <div id="createStatus">
       </div>
-      <div class="form-group">
-        <label for="description">Description</label>
-        <input type="text" class="form-control" id="description" name="description" placeholder="Description">
-      </div>
-      <div class="form-group">
-        <label for="collaborators">Collaborators</label>
-        <input type="text" class="form-control" id="collaborators" name="collaborators" placeholder="Name1, Name2, Name3, ...">
-      </div>
-      <label>Accessability</label>
-      <div class="radio">
-        <label>
-	      <input type="radio" id="public" name="accessRights" checked>
-	       Public
-	      </label>
-      </div>
-      <div class="radio">
-        <label>
+      <form id="createForm" action="/ajaxcreate/" method="post">
+	<div class="form-group">
+          <label for="projectName">Project Name</label>
+          <input type="text" class="form-control" id="projectName" name="name" placeholder="Project Name">
+	</div>
+	<div class="form-group">
+          <label for="description">Description</label>
+          <input type="text" class="form-control" id="description" name="description" placeholder="Description">
+	</div>
+	<div class="form-group">
+          <label for="collaborators">Collaborators</label>
+          <input type="text" class="form-control" id="collaborators" name="collaborators" placeholder="Name1, Name2, Name3, ...">
+	</div>
+	<!--<label>Accessability</label>
+	<div class="radio">
+          <label>
+	    <input type="radio" id="public" name="accessRights" checked>
+	    Public
+	  </label>
+	</div>
+	<div class="radio">
+          <label>
   	    <input type="radio" id="private" name="accessRights">
   	    Private
-	     </label>
-      </div>
-      <button id="createButton" type="submit" class="btn btn-default">Submit</button>
-    </form>
+	  </label>
+	</div>-->
+	<button id="createButton" type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
   </div>
 </div>
 <script src="/static/js/custom-create.js"></script>
 {% endblock body %}
+

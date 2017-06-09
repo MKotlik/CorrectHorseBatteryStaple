@@ -223,7 +223,7 @@ def ajaxcreate():
 
     description = request.form['description']
     # Using this to convert from string to boolean
-    access_rights = (request.form['accessRights'] == 'public')
+    access_rights = True#(request.form['accessRights'] == 'public')
     # visible = (request.form['visible'] == 'True')
     projID = db_projects.add_project(
         name, owner, description, access_rights, permissions)[1]['projID']

@@ -13,11 +13,13 @@
 {% endblock nav_links %}
 
 {% block body %}
-<div class="page-header">
-  <h1>Your search: {{query}}</h1><br>
-  <h1>Results</h1>
-  <ul class="list-group">
-    {{results | safe}}
-  </ul>
+<div class="container">
+  <div class="page-header">
+    <h1>Your search: {{query}}</h1><br>
+    <h1>Results</h1>
+    <ul class="list-group">
+      {{results | safe}}
+    </ul>
+  </div>
 </div>
 {% endblock body %} 
