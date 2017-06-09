@@ -1,9 +1,14 @@
 var socket = io();
 var container = $('.sandbox');
 var sandbox = Sandbox.create(socket, container);
-//var button = document.getElementByID("butt");
+var button = $("#save-button");
+console.log('======= GET READY FOR DA BIGGER BUTT ======');
+console.log(button.text());
 
-//button.addEventListener("click", sandbox.completePush)
+button.on("click", function(e) {
+  console.log('save button clicked');
+  sandbox.completePush();
+});
 
 container.on('contextmenu', function (e) {
     e.preventDefault();
