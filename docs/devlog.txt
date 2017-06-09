@@ -240,3 +240,10 @@ jamesY -- 2017-06-08 23:56
 
 - Added deployment files
 ==============================
+
+==============================
+kennethL -- 2017-06-09 14:37
+
+- Added dynamic collaborators (leave/join events)
+- Fixed set-list inconsistencies on server side
+==============================
