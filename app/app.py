@@ -89,6 +89,9 @@ def project(projID):
         return render_template('project.html',project_name="placeholder"+str(project))
 
 
+
+
+
 @app.route("/settings/")
 def profile():
     '''Displays the settings for the currently logged in user'''

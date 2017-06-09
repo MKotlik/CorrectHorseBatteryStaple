@@ -102,6 +102,18 @@ def get_projects():
     return result
 
 
+def does_project_exist(projID):
+    '''Checks whether a project with given projID exists in the database
+    Args: projID
+    Returns: boolean
+    '''
+    client = MongoClient()
+    projects = client["sculptio"].projects
+    result = projects.find({'projID': projID}).count() > 0
+    client.close()
+    return result
+
+
 # ===== CONTRIBUTOR FUNCTIONS ===== #
 
 def add_contributor(projID, username):
